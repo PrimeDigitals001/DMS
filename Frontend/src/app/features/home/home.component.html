@@ -1,0 +1,25 @@
+<div class="home-container">
+  <div class="product-list">
+    <div class="product-list-inner">
+      <app-product-card
+        *ngFor="let product of products"
+        [product]="product"
+        (addToCart)="addToCart($event)"
+      >
+      </app-product-card>
+    </div>
+  </div>
+
+  <div class="cart-section">
+    <app-cart
+      [items]="cartItems"
+      (clearCart)="clearCart()"
+      (updateQuantity)="updateQuantity($event)"
+    >
+    </app-cart>
+  </div>
+
+    <div class="modal-overlay" *ngIf="!isuser">
+    <app-rfid-scanner></app-rfid-scanner>
+  </div>
+</div>

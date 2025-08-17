@@ -1,0 +1,13 @@
+<div class="product-card">
+  <div class="image">
+    <img *ngIf="product.image; else noImage" [src]="product.image" alt="{{product.name}}">
+    <ng-template #noImage>
+      <div class="no-image">No Image</div>
+    </ng-template>
+  </div>
+  <h3>{{ product.name }}</h3>
+  <p>{{ product.size }}</p>
+  <strong>₹{{ product.price }}</strong>
+  <p class="stock">Stock: {{ product.stock }}</p>
+  <button class="add-btn" (click)="onAddToCart()">Add to Cart</button>
+</div>

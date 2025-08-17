@@ -1,0 +1,142 @@
+<div class="client-container">
+  <h2>Clients</h2>
+
+  <div class="top-bar">
+  <div class="search-section">
+    <!-- <label class="search-label">Quick search a Client</label> -->
+    <div class="search-box">
+      <p-floatlabel variant="on">
+        <input pInputText id="on_label" [(ngModel)]="searchQuery" autocomplete="off" />
+        <label for="on_label">Quick search a Client</label>
+      </p-floatlabel>
+      <!-- <input
+        type="text"
+        placeholder="Enter Client Name"
+        [(ngModel)]="searchQuery"
+      />
+      <i class="pi pi-search"></i> -->
+    </div>
+  </div>
+
+  <div class="total">
+    <h3>{{ totalClients }}</h3>
+    <p>Total number of Clients</p>
+  </div>
+
+  <button class="add-btn" (click)="showDialog()">Add New Client</button>
+</div>
+
+
+  <div class="table-section">
+    <h3>All Clients</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Owner Name</th>
+          <th>Phone No.</th>
+          <th>Edit</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let client of clients | searchFilter:searchQuery">
+          <td>{{ client.client }}</td>
+          <td>{{ client.ownerName }}</td>
+          <td>{{ client.phoneNumber }}</td>
+          <td>
+          <button
+              pButton
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text p-button-info"
+              (click)="showDialog(client)"
+            ></button>
+          </td>
+          <td>
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger"
+              (click)="deleteClient(client._id!)"
+            ></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<p-dialog
+  [header]="editMode ? 'Edit Client' : 'Add New Client'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '450px' }"
+  [contentStyle]="{ overflow: 'visible' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <form [formGroup]="clientForm" class="modal-body">
+    <div class="form-group">
+      <label for="client">Client Name</label>
+      <input
+        pInputText
+        id="client"
+        formControlName="client"
+        placeholder="Enter client name"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="ownerName">Owner Name</label>
+      <input
+        pInputText
+        id="ownerName"
+        formControlName="ownerName"
+        placeholder="Enter owner name"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="phoneNumber">Phone Number</label>
+      <input
+        pInputText
+        id="phoneNumber"
+        formControlName="phoneNumber"
+        placeholder="Enter phone number"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input
+        pInputText
+        id="email"
+        formControlName="email"
+        placeholder="Enter email"
+      />
+    </div>
+  </form>
+
+  <div class="modal-footer">
+    <button
+      pButton
+      label="Cancel"
+      class="btn-cancel"
+      (click)="visible = false"
+    ></button>
+    <button
+      *ngIf="!editMode"
+      pButton
+      label="Add Client"
+      class="btn-submit"
+      (click)="addClient()"
+    ></button>
+    <button
+      *ngIf="editMode"
+      pButton
+      label="Update Client"
+      class="btn-submit"
+      (click)="editClient()"
+    ></button>
+  </div>
+</p-dialog>

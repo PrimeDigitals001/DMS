@@ -1,0 +1,47 @@
+<div class="rfid-modal">
+  <!-- Icon -->
+  <div class="icon-wrapper">
+    <div class="icon">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="40"
+        height="40"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <rect
+          x="6"
+          y="4"
+          width="12"
+          height="16"
+          rx="2"
+          stroke-width="2"
+          stroke="#F56565"
+        />
+        <circle cx="12" cy="18" r="1" fill="#F56565" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- Title & subtitle -->
+  <h2 class="scanner-title">Scan RFID Card</h2>
+  <p class="scanner-subtitle">Tap your RFID card on the scanner</p>
+
+  <!-- Input display -->
+  <div class="rfid-display" [class.active]="isWaiting === false">
+    {{ scannedData || "RFID will appear here..." }}
+  </div>
+
+  <!-- Example/test -->
+  <p class="scanner-example">Try: 1234567890 (test customer)</p>
+
+  <!-- Popup after scan -->
+  <div class="popup" *ngIf="showPopup">
+    <div class="popup-content">
+      <h3>RFID Scanned!</h3>
+      <p>{{ scannedData }}</p>
+      <button (click)="closePopup()">Close</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,62 @@
+.home-container {
+  display: flex;
+  box-sizing: border-box;
+  gap: 15px;
+  height: 100%;
+  padding: 15px;
+  position: relative;
+}
+
+.product-list {
+  flex: 5;
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; 
+}
+
+.product-list-inner {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  overflow-y: scroll; 
+  padding-right: 6px; 
+}
+
+.cart-section {
+  flex: 2;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+}
+
+/* Full-screen modal overlay */
+.modal-overlay {
+  position: fixed;           /* cover the entire viewport */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6); /* dim background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;             /* above everything */
+}
+
+/* Prevent interaction with home content */
+.home-container *:not(.modal-overlay) {
+  pointer-events: auto;      /* normal by default */
+}
+
+/* Optional: when modal is active, dim and disable background */
+.home-container.modal-active > *:not(.modal-overlay) {
+  pointer-events: none;      /* disable clicks/interactions */
+  user-select: none;         /* prevent text selection */
+  opacity: 0.5;              /* visually dim the home page */
+}

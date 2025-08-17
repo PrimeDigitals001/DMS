@@ -1,0 +1,34 @@
+<div class="cart">
+  <div class="cart-header">
+    <span>{{ items.length }} items in cart</span>
+    <button class="clear-btn" (click)="clearCart.emit()">Clear</button>
+  </div>
+
+  <div class="cart-items">
+    <div class="cart-item" *ngFor="let item of items">
+      <div class="cart-img">
+        <img *ngIf="item.image; else noImg" [src]="item.image" alt="{{item.name}}">
+        <ng-template #noImg>
+          <div class="no-img">IMG</div>
+        </ng-template>
+      </div>
+      <div class="info">
+        <p>{{ item.name }}</p>
+        <strong>₹{{ item.price }}</strong>
+      </div>
+      <div class="qty-controls">
+        <button (click)="updateQuantity.emit({item, change: -1})">-</button>
+        <span>{{ item.quantity }}</span>
+        <button (click)="updateQuantity.emit({item, change: 1})">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="checkout-bar">
+    <div class="subtotal">
+      <span>Subtotal:</span>
+      <strong>₹{{ subtotal }}</strong>
+    </div>
+    <button class="checkout-btn">Complete Purchase (₹{{ subtotal }})</button>
+  </div>
+</div>

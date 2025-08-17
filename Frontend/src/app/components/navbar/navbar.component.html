@@ -1,0 +1,27 @@
+<nav class="navbar">
+  <!-- Left section: menu icon + logo -->
+  <div class="navbar-left">
+    <img src="assets/logo.png" alt="Amul Logo" class="logo" />
+  </div>
+
+  <!-- Center section: search bar -->
+  <div class="navbar-center">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search for Product"
+        [(ngModel)]="searchQuery"
+      />
+      <i class="pi pi-search search-icon" (click)="onSearch()"></i>
+    </div>
+  </div>
+
+  <!-- Right section: customer info -->
+  <div class="navbar-right">
+    <div class="customer-info">
+      <p><strong>Customer ID</strong> - #{{ customer.id }}</p>
+      <p><strong>Name</strong> - {{ customer.name }}</p>
+      <p><strong>Phone Number</strong> - {{ customer.phone }}</p>
+    </div>
+  </div>
+</nav>

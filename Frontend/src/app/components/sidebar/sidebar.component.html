@@ -1,0 +1,13 @@
+<div class="sidebar">
+  <ul class="menu">
+    <li 
+      *ngFor="let item of menuItems" 
+      [class.active]="item.route === selectedRoute"
+      (click)="selectMenu(item)"
+    >
+      <!-- <span class="material-icons">{{item.icon}}</span> -->
+       <i class="pi pi-users" style="font-size: 1.5rem"></i>
+      <span class="label">{{item.label}}</span>
+    </li>
+  </ul>
+</div>
