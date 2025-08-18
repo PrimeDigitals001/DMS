@@ -2,30 +2,25 @@
   <h2>Clients</h2>
 
   <div class="top-bar">
-  <div class="search-section">
-    <!-- <label class="search-label">Quick search a Client</label> -->
-    <div class="search-box">
+    <div class="search-section">
       <p-floatlabel variant="on">
-        <input pInputText id="on_label" [(ngModel)]="searchQuery" autocomplete="off" />
+        <input
+          pInputText
+          id="on_label"
+          [(ngModel)]="searchQuery"
+          autocomplete="off"
+          class="w-full"
+        />
         <label for="on_label">Quick search a Client</label>
       </p-floatlabel>
-      <!-- <input
-        type="text"
-        placeholder="Enter Client Name"
-        [(ngModel)]="searchQuery"
-      />
-      <i class="pi pi-search"></i> -->
     </div>
+
+    <div class="total">
+      <h3>{{ totalClients }}</h3>
+      <p>Total number of Clients</p>
+    </div>
+    <p-button label="Add New Client" (onClick)="showDialog()"> </p-button>
   </div>
-
-  <div class="total">
-    <h3>{{ totalClients }}</h3>
-    <p>Total number of Clients</p>
-  </div>
-
-  <button class="add-btn" (click)="showDialog()">Add New Client</button>
-</div>
-
 
   <div class="table-section">
     <h3>All Clients</h3>
@@ -40,12 +35,12 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let client of clients | searchFilter:searchQuery">
+        <tr *ngFor="let client of clients | searchFilter : searchQuery">
           <td>{{ client.client }}</td>
           <td>{{ client.ownerName }}</td>
           <td>{{ client.phoneNumber }}</td>
           <td>
-          <button
+            <button
               pButton
               icon="pi pi-pencil"
               class="p-button-rounded p-button-text p-button-info"
@@ -70,73 +65,72 @@
   [header]="editMode ? 'Edit Client' : 'Add New Client'"
   [modal]="true"
   [(visible)]="visible"
-  [style]="{ width: '450px' }"
+  [style]="{ width: '30rem' }"
   [contentStyle]="{ overflow: 'visible' }"
-  [draggable]="false"
-  [resizable]="false"
 >
-  <form [formGroup]="clientForm" class="modal-body">
-    <div class="form-group">
-      <label for="client">Client Name</label>
+  <form
+    [formGroup]="clientForm"
+    (ngSubmit)="editMode ? editClient() : addClient()"
+  >
+    <span class="p-text-secondary block mb-8">
+      Please fill in the client details below.
+    </span>
+
+    <div class="flex items-center gap-4 mb-4">
+      <label for="client" class="font-semibold w-24">Client Name</label>
       <input
         pInputText
         id="client"
         formControlName="client"
+        class="flex-auto"
         placeholder="Enter client name"
       />
     </div>
 
-    <div class="form-group">
-      <label for="ownerName">Owner Name</label>
+    <div class="flex items-center gap-4 mb-4">
+      <label for="ownerName" class="font-semibold w-24">Owner Name</label>
       <input
         pInputText
         id="ownerName"
         formControlName="ownerName"
+        class="flex-auto"
         placeholder="Enter owner name"
       />
     </div>
 
-    <div class="form-group">
-      <label for="phoneNumber">Phone Number</label>
+    <div class="flex items-center gap-4 mb-4">
+      <label for="phoneNumber" class="font-semibold w-24">Phone Number</label>
       <input
         pInputText
         id="phoneNumber"
         formControlName="phoneNumber"
+        class="flex-auto"
         placeholder="Enter phone number"
       />
     </div>
 
-    <div class="form-group">
-      <label for="email">Email</label>
+    <div class="flex items-center gap-4 mb-8">
+      <label for="email" class="font-semibold w-24">Email</label>
       <input
         pInputText
         id="email"
         formControlName="email"
+        class="flex-auto"
         placeholder="Enter email"
       />
     </div>
-  </form>
 
-  <div class="modal-footer">
-    <button
-      pButton
-      label="Cancel"
-      class="btn-cancel"
-      (click)="visible = false"
-    ></button>
-    <button
-      *ngIf="!editMode"
-      pButton
-      label="Add Client"
-      class="btn-submit"
-      (click)="addClient()"
-    ></button>
-    <button
-      *ngIf="editMode"
-      pButton
-      label="Update Client"
-      class="btn-submit"
-      (click)="editClient()"
-    ></button>
-  </div>
+    <div class="flex justify-end gap-2">
+      <p-button
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        (click)="visible = false"
+      ></p-button>
+      <p-button
+        type="submit"
+        [label]="editMode ? 'Update Client' : 'Add Client'"
+      ></p-button>
+    </div>
+  </form>
 </p-dialog>
