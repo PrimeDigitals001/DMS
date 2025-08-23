@@ -14,16 +14,16 @@ interface MenuItem {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.css'
+  styleUrls: ['./sidebar.component.css']
 })
 export class SidebarComponent implements OnInit {
   @Input() isOpen: boolean = false;
   @Output() sidebarToggle = new EventEmitter<void>();
 
   menuItems: MenuItem[] = [
-    // { icon: 'home', label: 'Home', route: '/' },
-    { icon: 'grid_view', label: 'Clients', route: '/clients' },
-    { icon: 'inventory_2', label: 'Items', route: '/items' },
+    { icon: 'home', label: 'Home', route: '/' },
+    { icon: 'users', label: 'Clients', route: '/clients' },
+    { icon: 'box', label: 'Items', route: '/items' }
   ];
 
   selectedRoute: string = '/';
@@ -31,10 +31,7 @@ export class SidebarComponent implements OnInit {
   constructor(private router: Router) {}
 
   ngOnInit() {
-    // Set initial selected route based on current URL
-    this.selectedRoute = this.router.url;
-    
-    // Listen to route changes to update selected menu item
+    // Track route changes to highlight active menu item
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
@@ -44,25 +41,7 @@ export class SidebarComponent implements OnInit {
 
   selectMenu(item: MenuItem) {
     this.selectedRoute = item.route;
-    // Navigate to the selected route
     this.router.navigate([item.route]);
-  }
-
-  isRouteActive(route: string): boolean {
-    return this.selectedRoute === route;
-  }
-
-  getIconClass(icon: string): string {
-    switch (icon) {
-      case 'home':
-        return 'pi pi-home';
-      case 'grid_view':
-        return 'pi pi-users';
-      case 'inventory_2':
-        return 'pi pi-box';
-      default:
-        return 'pi pi-circle';
-    }
   }
 
   onMouseEnter() {
@@ -75,5 +54,18 @@ export class SidebarComponent implements OnInit {
     if (this.isOpen) {
       this.sidebarToggle.emit();
     }
+  }
+
+  isRouteActive(route: string): boolean {
+    return this.selectedRoute === route;
+  }
+
+  getIconClass(icon: string): string {
+    const iconMap: { [key: string]: string } = {
+      'home': 'pi pi-home',
+      'users': 'pi pi-users',
+      'box': 'pi pi-box'
+    };
+    return iconMap[icon] || 'pi pi-circle';
   }
 }

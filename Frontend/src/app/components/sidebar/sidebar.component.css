@@ -239,3 +239,6 @@
 * {
   transition: all 0.2s ease;
 }
+.menu li .label {
+  font-size: 16px;
+}

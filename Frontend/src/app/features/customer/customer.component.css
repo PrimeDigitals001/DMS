@@ -4,7 +4,7 @@
   height: 100%;
 }
 
-.client-container {
+.customer-container {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -213,7 +213,7 @@ input[type="number"] {
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  .client-container {
+  .customer-container {
     padding: 10px;
   }
 

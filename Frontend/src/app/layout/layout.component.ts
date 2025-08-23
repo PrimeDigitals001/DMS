@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { NavbarComponent } from '../components/navbar/navbar.component';
 import { RouterOutlet } from '@angular/router';
-import { SidebarComponent } from "../components/sidebar/sidebar.component";
+import { SidebarComponent } from '../components/sidebar/sidebar.component';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -12,7 +12,6 @@ import { CommonModule } from '@angular/common';
   styleUrl: './layout.component.css'
 })
 export class LayoutComponent {
-  isAdmin: boolean = false;
   isSidebarOpen: boolean = false;
 
   toggleSidebar() {

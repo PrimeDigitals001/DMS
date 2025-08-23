@@ -1,0 +1,40 @@
+/* login.component.css */
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f3f4f6;
+  padding: 2rem;
+}
+
+.login-card {
+  background: #fff;
+  padding: 2.5rem;
+  border-radius: 12px;
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); */
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-title {
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.p-error {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.ng-invalid.ng-dirty,
+.ng-invalid.ng-touched {
+  border-color: #ef4444 !important;
+}
+
+button.p-button {
+  margin-top: 1rem;
+}

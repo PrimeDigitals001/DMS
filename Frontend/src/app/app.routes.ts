@@ -3,6 +3,7 @@ import { LayoutComponent } from './layout/layout.component';
 import { HomeComponent } from './features/home/home.component';
 import { ClientComponent } from './features/client/client.component';
 import { ItemComponent } from './features/item/item.component';
+import { CustomerComponent } from './features/customer/customer.component';
 
 export const routes: Routes = [
   {
@@ -21,6 +22,10 @@ export const routes: Routes = [
         path: 'items',
         component: ItemComponent,
       },
+      {
+        path: 'customers',
+        component: CustomerComponent,
+      }
     ],
   },
 ];

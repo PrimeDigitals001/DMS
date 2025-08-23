@@ -1,0 +1,57 @@
+<p-toast></p-toast>
+
+<div class="login-wrapper">
+  <div class="login-card">
+    <h2 class="login-title">Login</h2>
+
+    <form [formGroup]="loginForm" (ngSubmit)="login()">
+      <!-- Email -->
+      <div class="p-field mb-4">
+        <label for="email" class="block text-sm mb-1 font-medium">Email</label>
+        <input
+          pInputText
+          id="email"
+          formControlName="email"
+          placeholder="you@example.com"
+          [ngClass]="{ 'ng-invalid': isFieldInvalid('email') }"
+          class="w-full"
+        />
+        <small *ngIf="isFieldInvalid('email')" class="p-error">Valid email is required</small>
+      </div>
+
+      <!-- Password -->
+      <div class="p-field mb-4">
+        <label for="password" class="block text-sm mb-1 font-medium">Password</label>
+        <p-password
+          id="password"
+          formControlName="password"
+          toggleMask="true"
+          feedback="false"
+          inputClass="w-full"
+          [ngClass]="{ 'ng-invalid': isFieldInvalid('password') }"
+        ></p-password>
+        <small *ngIf="isFieldInvalid('password')" class="p-error">Password is required</small>
+      </div>
+
+      <!-- Remember me -->
+      <div class="p-field-checkbox mb-4 flex items-center">
+        <p-checkbox
+          binary="true"
+          inputId="rememberMe"
+          formControlName="rememberMe"
+        ></p-checkbox>
+        <label for="rememberMe" class="ml-2">Remember me</label>
+      </div>
+
+      <!-- Submit -->
+      <button
+        pButton
+        label="Login"
+        type="submit"
+        class="w-full"
+        [loading]="loading"
+        [disabled]="loading"
+      ></button>
+    </form>
+  </div>
+</div>
