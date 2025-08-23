@@ -8,7 +8,7 @@ import { ClientVDM } from '../models/client.vdm';
 })
 export class SearchFilterPipe implements PipeTransform {
 
-  transform(clients: ClientVDM[], searchQuery: string): ClientVDM[] {
+  transform(clients: ClientVDM[] , searchQuery: string): ClientVDM[] {
     if (!searchQuery) return clients;
     const query = searchQuery.toLowerCase().trim();
     return clients.filter(

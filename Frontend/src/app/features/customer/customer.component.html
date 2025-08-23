@@ -1,0 +1,220 @@
+<div class="customer-container">
+  <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+  
+  <h2>Customers</h2>
+
+  <div class="top-bar">
+    <div class="search-section">
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="on_label"
+          [(ngModel)]="searchQuery"
+          autocomplete="off"
+          class="w-full"
+          [disabled]="loading"
+        />
+        <label for="on_label">Quick search a Customer</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="total">
+      <h3>{{ totalCustomers }}</h3>
+      <p>Total number of Customers</p>
+    </div>
+    <p-button 
+      label="Add New Customer" 
+      (onClick)="showDialog()"
+      [disabled]="loading"
+      icon="pi pi-plus"
+      styleClass="add-btn"
+    ></p-button>
+  </div>
+
+  <div class="table-section">
+    <h3>All Customers</h3>
+    
+    @if (loading) {
+      <div class="loading-container">
+        <p-progressSpinner 
+          styleClass="w-4rem h-4rem" 
+          strokeWidth="3"
+          animationDuration=".5s"
+        ></p-progressSpinner>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer Name</th>
+              <th>Phone No.</th>
+              <th>Edit</th>
+              <th>Delete</th>
+              <th>View Invoice</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (customer of customers | customerSearchFilter : searchQuery; track customer._id) {
+              <tr>
+                <td [attr.data-label]="'Customer Name'">{{ customer.customerName }}</td>
+                <td [attr.data-label]="'Phone No.'">{{ customer.phoneNumber }}</td>
+                <td [attr.data-label]="'Edit'">
+                  <button
+                    pButton
+                    icon="pi pi-pencil"
+                    class="p-button-rounded p-button-text p-button-info"
+                    (click)="showDialog(customer)"
+                    pTooltip="Edit customer"
+                    tooltipPosition="top"
+                  ></button>
+                </td>
+                <td [attr.data-label]="'Delete'">
+                  <button
+                    pButton
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-text p-button-danger"
+                    (click)="deleteCustomer(customer)"
+                    pTooltip="Delete customer"
+                    tooltipPosition="top"
+                  ></button>
+                </td>
+                <td [attr.data-label]="'View Invoice'">
+                  <button
+                    pButton
+                    icon="pi pi-file-pdf"
+                    class="p-button-rounded p-button-text p-button-success"
+                    (click)="viewInvoices(customer)"
+                    pTooltip="View invoices"
+                    tooltipPosition="top"
+                  ></button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="empty-message">
+                  @if (searchQuery) {
+                    <span>No customers found matching "{{ searchQuery }}"</span>
+                  } @else {
+                    <span>No customers available. Click "Add New Customer" to get started.</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<p-dialog
+  [header]="editMode ? 'Edit Customer' : 'Add New Customer'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '90vw', maxWidth: '500px' }"
+  [contentStyle]="{ overflow: 'visible' }"
+  [closable]="!submitting"
+  [closeOnEscape]="!submitting"
+  (onHide)="closeDialog()"
+  [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <form
+    [formGroup]="customerForm"
+    (ngSubmit)="onSubmit()"
+    class="customer-form"
+  >
+    <span class="p-text-secondary block mb-4">
+      @if (editMode) {
+        Update the customer information below.
+      } @else {
+        Please fill in the customer details below. All fields are required.
+      }
+    </span>
+
+    <div class="field">
+      <label for="customerName" class="field-label">
+        Customer Name <span class="required">*</span>
+      </label>
+      <input
+        pInputText
+        id="customerName"
+        formControlName="customerName"
+        class="w-full"
+        placeholder="Enter customer name"
+        [class.ng-invalid]="hasError('customerName')"
+        [class.ng-dirty]="hasError('customerName')"
+        [disabled]="submitting"
+      />
+      @if (hasError('customerName')) {
+        <small class="p-error">
+          {{ getErrorMessage('customerName') }}
+        </small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="phoneNumber" class="field-label">
+        Phone Number <span class="required">*</span>
+      </label>
+      <input
+        pInputText
+        id="phoneNumber"
+        formControlName="phoneNumber"
+        class="w-full"
+        placeholder="Enter phone number (10 digits)"
+        maxlength="10"
+        [class.ng-invalid]="hasError('phoneNumber')"
+        [class.ng-dirty]="hasError('phoneNumber')"
+        [disabled]="submitting"
+      />
+      @if (hasError('phoneNumber')) {
+        <small class="p-error">
+          {{ getErrorMessage('phoneNumber') }}
+        </small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="rfid" class="field-label">
+        RFID <span class="required">*</span>
+      </label>
+      <input
+        pInputText
+        id="rfid"
+        formControlName="rfid"
+        class="w-full"
+        placeholder="Enter RFID"
+        [class.ng-invalid]="hasError('rfid')"
+        [class.ng-dirty]="hasError('rfid')"
+        [disabled]="submitting"
+      />
+      @if (hasError('rfid')) {
+        <small class="p-error">
+          {{ getErrorMessage('rfid') }}
+        </small>
+      }
+    </div>
+
+    <div class="dialog-footer">
+      <p-button
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        (onClick)="closeDialog()"
+        [disabled]="submitting"
+        styleClass="p-button-text"
+      ></p-button>
+      <p-button
+        type="submit"
+        [label]="editMode ? 'Update Customer' : 'Add Customer'"
+        [loading]="submitting"
+        [disabled]="submitting || customerForm.invalid"
+        icon="pi pi-check"
+      ></p-button>
+    </div>
+  </form>
+</p-dialog>

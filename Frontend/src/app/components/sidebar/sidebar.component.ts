@@ -1,30 +1,48 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { RouterModule } from '@angular/router';
+
+type UserRole = 'admin' | 'super-admin';
 
 interface MenuItem {
-  icon: string;
+  icon: string;          // primeicons class e.g. 'pi pi-users'
   label: string;
   route: string;
+  roles: UserRole[];     // which roles can see this item
 }
 
 @Component({
   selector: 'app-sidebar',
-  imports: [CommonModule],
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.css'
+  styleUrls: ['./sidebar.component.css']
 })
-export class SidebarComponent {
-  menuItems: MenuItem[] = [
-    { icon: 'grid_view', label: 'Clients', route: '/clients' },
-    // { icon: 'inventory_2', label: 'Manage Items', route: '/manage-items' },
-    // { icon: 'people', label: 'Customers', route: '/customers' }
+export class SidebarComponent implements OnInit {
+  // Option 1: pass role from parent: <app-sidebar [role]="userRole"></app-sidebar>
+  @Input() role?: UserRole;
+
+  // Fallback: read role from localStorage if not provided via @Input
+  currentRole: UserRole = 'admin';
+
+  // Full menu; visibility is filtered by role
+  private allMenuItems: MenuItem[] = [
+    { icon: 'pi pi-chart-line', label: 'Analytics',         route: '/analytics', roles: ['admin', 'super-admin'] },
+    { icon: 'pi pi-users',      label: 'Manage Customers',  route: '/customers', roles: ['admin', 'super-admin'] },
+    { icon: 'pi pi-box',        label: 'Manage Items',      route: '/items',     roles: ['admin', 'super-admin'] },
+    { icon: 'pi pi-briefcase',  label: 'Manage Clients',    route: '/clients',   roles: ['super-admin'] },
   ];
 
-  selectedRoute: string = '/dashboard';
+  get menuItems(): MenuItem[] {
+    return this.allMenuItems.filter(m => m.roles.includes(this.currentRole));
+  }
 
-  selectMenu(item: MenuItem) {
-    this.selectedRoute = item.route;
-    // Navigate to route if using Router
-    // this.router.navigate([item.route]);
+  ngOnInit(): void {
+    if (this.role) {
+      this.currentRole = this.role;
+    } else {
+      const stored = (localStorage.getItem('role') as UserRole | null) ?? 'admin';
+      this.currentRole = stored === 'super-admin' ? 'super-admin' : 'admin';
+    }
   }
 }

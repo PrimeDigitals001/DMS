@@ -2,9 +2,11 @@
   <app-navbar></app-navbar>
 
   <main class="main-content">
-    <div class="sidebar" *ngIf="isAdmin">
-      <app-sidebar></app-sidebar>
-    </div>
+    @if (isSidebarVisible()) {
+      <div class="sidebar">
+        <app-sidebar [role]="role()!"></app-sidebar>
+      </div>
+    }
     <div class="main-screen">
       <router-outlet></router-outlet>
     </div>

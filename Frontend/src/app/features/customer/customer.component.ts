@@ -8,236 +8,253 @@ import {
   Validators,
 } from '@angular/forms';
 import { take, finalize } from 'rxjs/operators';
-import { ClientVDM } from '../../shared/models/client.vdm';
-import { ClientService } from '../../core/services/client.service';
-import { Dialog } from 'primeng/dialog';
+import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SearchFilterPipe } from '../../shared/pipes/search-filter.pipe';
-import { FloatLabel } from 'primeng/floatlabel';
+import { FloatLabelModule } from 'primeng/floatlabel';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TableModule } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
+import { SkeletonModule } from 'primeng/skeleton';
 import { Table } from 'primeng/table';
+import { Router } from '@angular/router';
+import { CustomerVDM } from '../../shared/models/customer.vdm';
+import { CustomerService } from '../../core/services/customer.service';
+import { CustomerSearchFilterPipe } from '../../cutomer-search-filter.pipe';
 
 @Component({
-  selector: 'app-client',
+  selector: 'app-customer',
   standalone: true,
   imports: [
     CommonModule,
     FormsModule,
-    Dialog,
+    DialogModule,
     ButtonModule,
     InputTextModule,
     ReactiveFormsModule,
-    SearchFilterPipe,
-    FloatLabel,
+    CustomerSearchFilterPipe,
+    FloatLabelModule,
     ToastModule,
     ConfirmDialogModule,
     ProgressSpinnerModule,
     TableModule,
+    TooltipModule,
+    SkeletonModule,
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './client.component.html',
-  styleUrls: ['./client.component.css'],
+  templateUrl: './customer.component.html',
+  styleUrls: ['./customer.component.css'],
 })
-export class ClientComponent implements OnInit {
+export class CustomerComponent implements OnInit {
   @ViewChild('dt') table!: Table;
   
-  clients: ClientVDM[] = [];
+  customers: CustomerVDM[] = [];
   searchQuery: string = '';
   loading: boolean = false;
   submitting: boolean = false;
-  totalClients: number = 0;
+  totalCustomers: number = 0;
   visible: boolean = false;
-  clientForm!: FormGroup;
+  customerForm!: FormGroup;
 
   editMode: boolean = false;
-  selectedClientId: string | null = null;
+  selectedCustomerId: string | null = null;
 
   constructor(
     private fb: FormBuilder,
-    private clientService: ClientService,
+    private customerService: CustomerService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.initForm();
-    this.loadClients();
+    this.loadCustomers();
   }
 
-  /** Initialize the Add/Edit Client Form */
+  /** Initialize the Add/Edit Customer Form */
   initForm() {
-    this.clientForm = this.fb.group({
-      client: ['', [Validators.required, Validators.minLength(2)]],
-      ownerName: ['', [Validators.required, Validators.minLength(2)]],
+    this.customerForm = this.fb.group({
+      customerName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       phoneNumber: [
         '',
         [Validators.required, Validators.pattern(/^[0-9]{10}$/)],
       ],
-      email: ['', [Validators.required, Validators.email]],
+      rfid: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50)]],
     });
   }
 
   /** Open Add/Edit Dialog */
-  showDialog(client?: ClientVDM) {
-    if (client) {
+  showDialog(customer?: CustomerVDM) {
+    if (customer) {
       // Edit mode
       this.editMode = true;
-      this.selectedClientId = client._id || null;
-      this.clientForm.patchValue(client);
+      this.selectedCustomerId = customer._id || null;
+      this.customerForm.patchValue(customer);
     } else {
       // Add mode
       this.editMode = false;
-      this.selectedClientId = null;
-      this.clientForm.reset();
+      this.selectedCustomerId = null;
+      this.customerForm.reset();
     }
     this.visible = true;
   }
 
-  /** Fetch clients from backend */
-  loadClients(): void {
+  /** Fetch customers from backend */
+  loadCustomers(): void {
     this.loading = true;
-    this.clientService
-      .getClients()
+    this.customerService
+      .getCustomers()
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (res) => {
-          this.clients = res;
-          this.totalClients = this.clients.length;
+          this.customers = res;
+          this.totalCustomers = this.customers.length;
         },
         error: (err) => {
-          console.error('Error fetching clients:', err);
+          console.error('Error fetching customers:', err);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Failed to load clients. Please try again.',
+            detail: 'Failed to load customers. Please try again.',
             life: 5000,
           });
         },
       });
   }
 
-  /** Add new client */
-  addClient() {
-    if (this.clientForm.invalid) {
-      this.markFormGroupTouched(this.clientForm);
+  /** Add new customer */
+  addCustomer() {
+    if (this.customerForm.invalid) {
+      this.markFormGroupTouched(this.customerForm);
       return;
     }
 
     this.submitting = true;
-    const newClient = new ClientVDM(this.clientForm.value);
+    const newCustomer = new CustomerVDM(this.customerForm.value);
 
-    this.clientService
-      .createClient(newClient)
+    this.customerService
+      .createCustomer(newCustomer)
       .pipe(
         take(1),
         finalize(() => (this.submitting = false))
       )
       .subscribe({
         next: () => {
-          this.loadClients();
+          this.loadCustomers();
           this.visible = false;
           this.messageService.add({
             severity: 'success',
             summary: 'Success',
-            detail: 'Client added successfully',
+            detail: 'Customer added successfully',
             life: 3000,
           });
         },
         error: (err) => {
-          console.error('Error adding client:', err);
+          console.error('Error adding customer:', err);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Failed to add client. Please try again.',
+            detail: err.error?.message || 'Failed to add customer. Please try again.',
             life: 5000,
           });
         },
       });
   }
 
-  /** Edit existing client */
-  editClient() {
-    if (this.clientForm.invalid || !this.selectedClientId) {
-      this.markFormGroupTouched(this.clientForm);
+  /** Edit existing customer */
+  editCustomer() {
+    if (this.customerForm.invalid || !this.selectedCustomerId) {
+      this.markFormGroupTouched(this.customerForm);
       return;
     }
 
     this.submitting = true;
-    const updatedClient = new ClientVDM(this.clientForm.value);
+    const updatedCustomer = new CustomerVDM(this.customerForm.value);
 
-    this.clientService
-      .updateClient(this.selectedClientId, updatedClient)
+    this.customerService
+      .updateCustomer(this.selectedCustomerId, updatedCustomer)
       .pipe(
         take(1),
         finalize(() => (this.submitting = false))
       )
       .subscribe({
         next: () => {
-          this.loadClients();
+          this.loadCustomers();
           this.visible = false;
           this.messageService.add({
             severity: 'success',
             summary: 'Success',
-            detail: 'Client updated successfully',
+            detail: 'Customer updated successfully',
             life: 3000,
           });
         },
         error: (err) => {
-          console.error('Error updating client:', err);
+          console.error('Error updating customer:', err);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Failed to update client. Please try again.',
+            detail: err.error?.message || 'Failed to update customer. Please try again.',
             life: 5000,
           });
         },
       });
   }
 
-  /** Delete client with confirmation */
-  deleteClient(client: ClientVDM) {
+  /** Delete customer with confirmation */
+  deleteCustomer(customer: CustomerVDM) {
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete client "${client.client}"?`,
+      message: `Are you sure you want to delete customer "${customer.customerName}"? This action cannot be undone.`,
       header: 'Delete Confirmation',
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text',
+      acceptLabel: 'Yes, Delete',
+      rejectLabel: 'Cancel',
       accept: () => {
-        this.performDelete(client._id!);
+        this.performDelete(customer._id!, customer.customerName);
       },
     });
   }
 
   /** Perform the actual delete operation */
-  private performDelete(clientId: string) {
-    this.clientService
-      .deleteClient(clientId)
+  private performDelete(customerId: string, customerName: string) {
+    this.customerService
+      .deleteCustomer(customerId)
       .pipe(take(1))
       .subscribe({
         next: () => {
-          this.loadClients();
+          this.loadCustomers();
           this.messageService.add({
             severity: 'success',
             summary: 'Success',
-            detail: 'Client deleted successfully',
+            detail: `Customer "${customerName}" deleted successfully`,
             life: 3000,
           });
         },
         error: (err) => {
-          console.error('Error deleting client:', err);
+          console.error('Error deleting customer:', err);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Failed to delete client. Please try again.',
+            detail: err.error?.message || 'Failed to delete customer. Please try again.',
             life: 5000,
           });
         },
       });
+  }
+
+  /** View customer invoices */
+  viewInvoices(customer: CustomerVDM) {
+    // Navigate to invoices page with customer ID
+    this.router.navigate(['/invoices'], { 
+      queryParams: { customerId: customer._id, customerName: customer.customerName } 
+    });
   }
 
   /** Mark all form fields as touched to show validation errors */
@@ -250,30 +267,30 @@ export class ClientComponent implements OnInit {
 
   /** Get form control for validation */
   get f() {
-    return this.clientForm.controls;
+    return this.customerForm.controls;
   }
 
   /** Check if field has error */
   hasError(fieldName: string): boolean {
-    const field = this.clientForm.get(fieldName);
+    const field = this.customerForm.get(fieldName);
     return !!(field?.invalid && (field?.dirty || field?.touched));
   }
 
   /** Get error message for field */
   getErrorMessage(fieldName: string): string {
-    const field = this.clientForm.get(fieldName);
+    const field = this.customerForm.get(fieldName);
     if (field?.errors) {
       if (field.errors['required']) {
         return `${this.getFieldLabel(fieldName)} is required`;
       }
-      if (field.errors['email']) {
-        return 'Please enter a valid email address';
-      }
       if (field.errors['pattern']) {
-        return 'Phone number must be 10 digits';
+        return 'Phone number must be exactly 10 digits';
       }
       if (field.errors['minlength']) {
         return `${this.getFieldLabel(fieldName)} must be at least ${field.errors['minlength'].requiredLength} characters`;
+      }
+      if (field.errors['maxlength']) {
+        return `${this.getFieldLabel(fieldName)} must not exceed ${field.errors['maxlength'].requiredLength} characters`;
       }
     }
     return '';
@@ -282,10 +299,9 @@ export class ClientComponent implements OnInit {
   /** Get field label for error messages */
   private getFieldLabel(fieldName: string): string {
     const labels: { [key: string]: string } = {
-      client: 'Client name',
-      ownerName: 'Owner name',
+      customerName: 'Customer name',
       phoneNumber: 'Phone number',
-      email: 'Email',
+      rfid: 'RFID',
     };
     return labels[fieldName] || fieldName;
   }
@@ -293,7 +309,16 @@ export class ClientComponent implements OnInit {
   /** Close dialog and reset form */
   closeDialog() {
     this.visible = false;
-    this.clientForm.reset();
+    this.customerForm.reset();
     this.submitting = false;
+  }
+
+  /** Handle form submission */
+  onSubmit() {
+    if (this.editMode) {
+      this.editCustomer();
+    } else {
+      this.addCustomer();
+    }
   }
 }
