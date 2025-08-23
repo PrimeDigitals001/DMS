@@ -11,13 +11,32 @@
 .navbar-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
 }
 
-.menu-icon {
-  font-size: 1.5rem;
-  color: red;
+.menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  color: white;
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.menu-toggle:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.menu-toggle i {
+  font-size: 1.2rem;
 }
 
 .logo {

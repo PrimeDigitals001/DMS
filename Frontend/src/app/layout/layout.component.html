@@ -1,11 +1,13 @@
 <div class="layout-container">
-  <app-navbar></app-navbar>
+  <app-navbar (sidebarToggle)="toggleSidebar()"></app-navbar>
 
   <main class="main-content">
-    <div class="sidebar" *ngIf="isAdmin">
-      <app-sidebar></app-sidebar>
-    </div>
-    <div class="main-screen">
+    <app-sidebar 
+      [isOpen]="isSidebarOpen"
+      (sidebarToggle)="onSidebarToggle()">
+    </app-sidebar>
+    
+    <div class="main-screen" [class.sidebar-open]="isSidebarOpen">
       <router-outlet></router-outlet>
     </div>
   </main>

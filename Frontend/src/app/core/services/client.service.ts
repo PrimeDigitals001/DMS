@@ -1,41 +1,74 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, from, map } from 'rxjs';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  query, 
+  where 
+} from 'firebase/firestore';
 import { ClientVDM } from '../../shared/models/client.vdm';
+import { db } from '../../../firebase.config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ClientService {
-  private baseUrl = 'http://localhost:3000/api/super-admin/clients';
+  private collectionName = 'clients';
 
-  constructor(private http: HttpClient) {}
+  constructor() {}
 
   createClient(client: ClientVDM): Observable<ClientVDM> {
-    return this.http
-      .post(this.baseUrl, client.toRemote())
-      .pipe(map((res) => ClientVDM.toLocal(res)));
+    return from(addDoc(collection(db, this.collectionName), client.toRemote())).pipe(
+      map((docRef) => {
+        const newClient = new ClientVDM({ ...client.toRemote(), _id: docRef.id });
+        return newClient;
+      })
+    );
   }
 
   updateClient(id: string, client: ClientVDM): Observable<ClientVDM> {
-    return this.http
-      .put(`${this.baseUrl}/${id}`, client.toRemote())
-      .pipe(map((res) => ClientVDM.toLocal(res)));
+    const docRef = doc(db, this.collectionName, id);
+    return from(updateDoc(docRef, client.toRemote())).pipe(
+      map(() => {
+        const updatedClient = new ClientVDM({ ...client.toRemote(), _id: id });
+        return updatedClient;
+      })
+    );
   }
 
   getClients(): Observable<ClientVDM[]> {
-    return this.http
-      .get<any>(this.baseUrl)
-      .pipe(map((res) => res.data.map((item: any) => ClientVDM.toLocal(item))));
+    return from(getDocs(collection(db, this.collectionName))).pipe(
+      map((querySnapshot) => {
+        const clients: ClientVDM[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          clients.push(ClientVDM.toLocal({ ...data, _id: doc.id }));
+        });
+        return clients;
+      })
+    );
   }
 
   getClientById(id: string): Observable<ClientVDM> {
-    return this.http
-      .get(`${this.baseUrl}/${id}`)
-      .pipe(map((res) => ClientVDM.toLocal(res)));
+    const docRef = doc(db, this.collectionName, id);
+    return from(getDocs(query(collection(db, this.collectionName), where('__name__', '==', id)))).pipe(
+      map((querySnapshot) => {
+        if (!querySnapshot.empty) {
+          const doc = querySnapshot.docs[0];
+          const data = doc.data();
+          return ClientVDM.toLocal({ ...data, _id: doc.id });
+        }
+        throw new Error('Client not found');
+      })
+    );
   }
 
   deleteClient(id: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${id}`);
+    const docRef = doc(db, this.collectionName, id);
+    return from(deleteDoc(docRef));
   }
 }

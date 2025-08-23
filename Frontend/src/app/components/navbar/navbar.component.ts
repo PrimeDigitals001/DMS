@@ -1,6 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
 
 @Component({
   selector: 'app-navbar',
@@ -10,6 +9,8 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent {
+  @Output() sidebarToggle = new EventEmitter<void>();
+  
   searchQuery: string = '';
 
   customer = {
@@ -23,5 +24,9 @@ export class NavbarComponent {
       console.log('Searching for:', this.searchQuery);
       // replace this with actual API call later
     }
+  }
+
+  toggleSidebar() {
+    this.sidebarToggle.emit();
   }
 }

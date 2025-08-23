@@ -1,0 +1,288 @@
+<div class="item-container">
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+  
+  <!-- Confirmation Dialog -->
+  <p-confirmDialog></p-confirmDialog>
+
+  <h2>Items</h2>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="search-section">
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          [(ngModel)]="searchQuery"
+          autocomplete="off"
+          class="w-full"
+          placeholder="Quick search an Item"
+        />
+        <label>Quick search an Item</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="total">
+      <h3>{{ totalItems }}</h3>
+      <p>Total number of Items</p>
+    </div>
+    
+    <div class="flex gap-2">
+      <p-button 
+        label="Test Firebase" 
+        icon="pi pi-database"
+        severity="secondary"
+        (onClick)="testFirebase()"
+        [disabled]="loading">
+      </p-button>
+      <p-button 
+        label="Test Create" 
+        icon="pi pi-plus-circle"
+        severity="secondary"
+        (onClick)="testCreateDocument()"
+        [disabled]="loading">
+      </p-button>
+      <p-button 
+        label="Add New Item" 
+        icon="pi pi-plus"
+        (onClick)="showDialog()"
+        [disabled]="loading">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-section">
+    <h3>All Items</h3>
+    
+    <p-table 
+      #dt
+      [value]="filteredItems"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} items"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [globalFilterFields]="['name', 'capacity']"
+      styleClass="p-datatable-sm"
+      responsiveLayout="scroll">
+      
+      <!-- Loading Template -->
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="6" class="text-center p-4">
+            <p-progressSpinner></p-progressSpinner>
+            <p class="mt-2">Loading items...</p>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty Template -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center p-4">
+            <p class="text-lg text-gray-500">No items found</p>
+            <p class="text-sm text-gray-400 mt-2">
+              {{ searchQuery ? 'No results for "' + searchQuery + '"' : 'Add your first item to get started' }}
+            </p>
+            <p-button 
+              *ngIf="searchQuery"
+              label="Clear search" 
+              severity="secondary" 
+              size="small"
+              (onClick)="searchQuery = ''"
+              class="mt-3">
+            </p-button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Table Header -->
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id" style="width: 120px">
+            Item ID
+            <p-sortIcon field="id"></p-sortIcon>
+          </th>
+          <th pSortableColumn="name" style="width: 250px">
+            Item Name
+            <p-sortIcon field="name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="capacity" style="width: 120px">
+            Capacity
+            <p-sortIcon field="capacity"></p-sortIcon>
+          </th>
+          <th pSortableColumn="price" style="width: 120px">
+            Price
+            <p-sortIcon field="price"></p-sortIcon>
+          </th>
+          <th style="width: 80px">Image</th>
+          <th style="width: 120px">Actions</th>
+        </tr>
+      </ng-template>
+
+      <!-- Table Body -->
+      <ng-template pTemplate="body" let-item let-rowIndex="rowIndex">
+        <tr>
+          <td class="text-center font-mono">{{ formatItemId(item._id!) }}</td>
+          <td>{{ item.name }}</td>
+          <td class="text-center">{{ item.capacity }}</td>
+          <td class="text-center font-medium">₹{{ item.price }}</td>
+          <td class="text-center">
+            <div class="image-preview" *ngIf="item.image; else noImage">
+              <img [src]="item.image" [alt]="item.name" class="w-12 h-12 object-cover rounded">
+            </div>
+            <ng-template #noImage>
+              <span class="text-gray-400 text-sm">No image</span>
+            </ng-template>
+          </td>
+          <td class="text-center">
+            <div class="flex gap-2 justify-center">
+              <p-button 
+                icon="pi pi-pencil" 
+                severity="info" 
+                size="small"
+                [disabled]="modalLoading"
+                (onClick)="showDialog(item)">
+              </p-button>
+              <p-button 
+                icon="pi pi-trash" 
+                severity="danger" 
+                size="small"
+                [disabled]="deleteLoading"
+                (onClick)="deleteItem(item)">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Add/Edit Item Dialog -->
+<p-dialog
+  [header]="editMode ? 'Edit Item' : 'Add New Item'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '40rem' }"
+  [contentStyle]="{ overflow: 'visible' }"
+  [closable]="!modalLoading"
+  (onHide)="closeDialog()">
+  
+  <form [formGroup]="itemForm" (ngSubmit)="editMode ? editItem() : addItem()">
+    <div class="space-y-4">
+      <!-- Item Name -->
+      <div class="field">
+        <label for="name" class="block text-sm font-medium mb-2">Item Name *</label>
+        <input
+          pInputText
+          id="name"
+          formControlName="name"
+          class="w-full"
+          placeholder="Enter item name"
+          [disabled]="modalLoading"
+        />
+        <small 
+          *ngIf="itemForm.get('name')?.invalid && itemForm.get('name')?.touched" 
+          class="p-error block mt-1">
+          <span *ngIf="itemForm.get('name')?.errors?.['required']">Item name is required</span>
+          <span *ngIf="itemForm.get('name')?.errors?.['minlength']">Item name must be at least 2 characters</span>
+        </small>
+      </div>
+
+      <!-- Capacity and Image Upload -->
+      <div class="flex gap-4">
+        <div class="field flex-1">
+          <label for="capacity" class="block text-sm font-medium mb-2">Capacity *</label>
+          <p-dropdown
+            id="capacity"
+            formControlName="capacity"
+            [options]="capacityOptions"
+            placeholder="Select capacity"
+            [disabled]="modalLoading"
+            class="w-full">
+          </p-dropdown>
+          <small 
+            *ngIf="itemForm.get('capacity')?.invalid && itemForm.get('capacity')?.touched" 
+            class="p-error block mt-1">
+            Capacity is required
+          </small>
+        </div>
+
+        <div class="field">
+          <label class="block text-sm font-medium mb-2">Upload Photo</label>
+          <div class="image-upload-container">
+            <p-fileUpload
+              mode="basic"
+              accept="image/*"
+              [maxFileSize]="1000000"
+              [customUpload]="true"
+              (uploadHandler)="onImageUpload($event)"
+              [disabled]="modalLoading || imageUploading"
+              chooseLabel="Upload"
+              [auto]="true"
+              [showCancelButton]="false">
+            </p-fileUpload>
+            
+            <div *ngIf="imageUploading" class="mt-2">
+              <p-progressSpinner size="small"></p-progressSpinner>
+              <span class="text-xs text-blue-600 ml-2">Uploading...</span>
+            </div>
+            
+            <div *ngIf="itemForm.get('image')?.value && !imageUploading" class="mt-2">
+              <img [src]="itemForm.get('image')?.value" alt="Preview" class="w-16 h-16 object-cover rounded border">
+              <p-button 
+                label="Clear" 
+                severity="secondary" 
+                size="small"
+                (onClick)="clearImage()"
+                class="mt-1">
+              </p-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price -->
+      <div class="field">
+        <label for="price" class="block text-sm font-medium mb-2">Item Price *</label>
+        <p-inputNumber
+          id="price"
+          formControlName="price"
+          mode="currency"
+          currency="INR"
+          [minFractionDigits]="2"
+          [maxFractionDigits]="2"
+          placeholder="Enter price"
+          [disabled]="modalLoading"
+          class="w-full">
+        </p-inputNumber>
+        <small 
+          *ngIf="itemForm.get('price')?.invalid && itemForm.get('price')?.touched" 
+          class="p-error block mt-1">
+          <span *ngIf="itemForm.get('price')?.errors?.['required']">Price is required</span>
+          <span *ngIf="itemForm.get('price')?.errors?.['min']">Price must be greater than 0</span>
+        </small>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-3 mt-6">
+      <p-button
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        [disabled]="modalLoading"
+        (onClick)="closeDialog()">
+      </p-button>
+      <p-button
+        type="submit"
+        [label]="editMode ? 'Update Item' : 'Add Item'"
+        [loading]="modalLoading"
+        [disabled]="itemForm.invalid || modalLoading || imageUploading">
+      </p-button>
+    </div>
+  </form>
+</p-dialog>
