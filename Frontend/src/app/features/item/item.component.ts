@@ -123,34 +123,47 @@ export class ItemComponent implements OnInit {
 
   /** Open Add/Edit Dialog */
   showDialog(item?: ItemVDM) {
+    // Reset form and state first
+    this.resetDialogState();
+    
     if (item) {
       // Edit mode
       this.editMode = true;
       this.selectedItemId = item._id || null;
-      this.itemForm.patchValue({
-        name: item.name,
-        capacity: item.capacity,
-        price: item.price,
-        image: item.image || '',
-      });
+      
+      // Use setTimeout to ensure form is properly initialized
+      setTimeout(() => {
+        this.itemForm.patchValue({
+          name: item.name,
+          capacity: item.capacity,
+          price: item.price,
+          image: item.image || '',
+        });
+      }, 0);
     } else {
       // Add mode
       this.editMode = false;
       this.selectedItemId = null;
-      this.itemForm.reset();
     }
+    
     this.visible = true;
+    this.clearMessages();
+  }
+
+  /** Reset dialog state and form */
+  resetDialogState() {
+    this.editMode = false;
+    this.selectedItemId = null;
+    this.modalLoading = false;
+    this.imageUploading = false;
+    this.itemForm.reset();
     this.clearMessages();
   }
 
   /** Close dialog and reset form */
   closeDialog() {
     this.visible = false;
-    this.editMode = false;
-    this.selectedItemId = null;
-    this.itemForm.reset();
-    this.clearMessages();
-    this.imageUploading = false;
+    this.resetDialogState();
   }
 
   /** Add new item */
@@ -318,40 +331,5 @@ export class ItemComponent implements OnInit {
         item.name.toLowerCase().includes(query) ||
         item.capacity.toLowerCase().includes(query)
     );
-  }
-
-  /** Format item ID with leading zeros */
-  formatItemId(id: string): string {
-    return String(id).padStart(4, '0');
-  }
-
-  /** Test Firebase connectivity */
-  testFirebase() {
-    console.log('Testing Firebase connectivity...');
-    this.itemService.testConnection().subscribe({
-      next: (success: boolean) => {
-        console.log('Firebase test successful:', success);
-        this.showSuccess('Firebase connection successful!');
-      },
-      error: (err: any) => {
-        console.error('Firebase test failed:', err);
-        this.showError('Firebase connection failed: ' + err.message);
-      }
-    });
-  }
-
-  /** Test document creation */
-  testCreateDocument() {
-    console.log('Testing document creation...');
-    this.itemService.testCreateDocument().subscribe({
-      next: (result: any) => {
-        console.log('Test document created successfully:', result);
-        this.showSuccess('Test document created successfully!');
-      },
-      error: (err: any) => {
-        console.error('Test document creation failed:', err);
-        this.showError('Test document creation failed: ' + err.message);
-      }
-    });
   }
 }

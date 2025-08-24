@@ -1,12 +1,13 @@
 export const environment = {
   production: true,
   firebaseConfig: {
-    apiKey: "AIzaSyBMfY4zFuxigcYeW9FqomE9rFoaDuQEQyk",
-    authDomain: "pddairy-6969.firebaseapp.com",
-    projectId: "pddairy-6969",
-    storageBucket: "pddairy-6969.firebasestorage.app",
-    messagingSenderId: "726536118527",
-    appId: "1:726536118527:web:e7becec4dc4178c216ecca",
-    measurementId: "G-B8BDV6DC9B"
+    apiKey: "AIzaSyAUpKOSx-BVU0mqINDIrWJW5Heu6FLD2B0",
+    authDomain: "mdairy-d.firebaseapp.com",
+    databaseURL: "https://mdairy-d-default-rtdb.firebaseio.com",
+    projectId: "mdairy-d",
+    storageBucket: "mdairy-d.firebasestorage.app",
+    messagingSenderId: "372517822671",
+    appId: "1:372517822671:web:98b1d8f43eb5095d9417ba",
+    measurementId: "G-BXKBXZ7FKD"
   }
 };

@@ -1,5 +1,16 @@
 <div class="home-container">
-  <div class="product-list">
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p>Loading products...</p>
+    </div>
+  </div>
+
+  <div class="product-list" *ngIf="!loading">
     <div class="product-list-inner">
       <app-product-card
         *ngFor="let product of products"
@@ -8,6 +19,15 @@
       >
       </app-product-card>
     </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="products.length === 0">
+      <div class="empty-content">
+        <i class="pi pi-box" style="font-size: 3rem; color: #3b82f6;"></i>
+        <h3>No Products Available</h3>
+        <p>No products have been added yet. Please add some products in the Items section.</p>
+      </div>
+    </div>
   </div>
 
   <div class="cart-section">
@@ -15,11 +35,11 @@
       [items]="cartItems"
       (clearCart)="clearCart()"
       (updateQuantity)="updateQuantity($event)"
-    >
+      (purchaseCompleted)="onPurchaseCompleted()">
     </app-cart>
   </div>
 
-    <div class="modal-overlay" *ngIf="!isuser">
+  <div class="modal-overlay" *ngIf="!isuser">
     <app-rfid-scanner></app-rfid-scanner>
   </div>
 </div>

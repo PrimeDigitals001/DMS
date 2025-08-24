@@ -3,6 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 
 export interface Product {
+  id?: string;
   name: string;
   size: string;
   price: number;

@@ -23,7 +23,8 @@ export class SidebarComponent implements OnInit {
   menuItems: MenuItem[] = [
     { icon: 'home', label: 'Home', route: '/' },
     { icon: 'users', label: 'Clients', route: '/clients' },
-    { icon: 'box', label: 'Items', route: '/items' }
+    { icon: 'box', label: 'Items', route: '/items' },
+    { icon: 'users', label: 'Customers', route: '/customers' }
   ];
 
   selectedRoute: string = '/';

@@ -1,14 +1,15 @@
 .item-container {
   padding: 1.5rem;
-  background-color: #f8fafc;
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
   min-height: 100vh;
 }
 
 .item-container h2 {
   font-size: 1.875rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #1e3a8a;
   margin-bottom: 1.5rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Top Bar */
@@ -18,11 +19,12 @@
   align-items: center;
   background: white;
   padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
   gap: 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 .search-section {
@@ -33,50 +35,59 @@
 .search-section input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
   font-size: 0.875rem;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  background: #f8fafc;
 }
 
 .search-section input:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: white;
 }
 
 .total {
   text-align: center;
   min-width: 150px;
+  padding: 1rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 0.75rem;
+  color: white;
 }
 
 .total h3 {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #1e293b;
   margin: 0;
+  color: white;
 }
 
 .total p {
   font-size: 0.875rem;
-  color: #64748b;
+  color: #dbeafe;
   margin: 0.25rem 0 0 0;
 }
 
 /* Table Section */
 .table-section {
   background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
   overflow: hidden;
+  border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 .table-section h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1e293b;
+  color: #1e3a8a;
   margin: 0;
   padding: 1.5rem 1.5rem 1rem 1.5rem;
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 /* PrimeNG Table Customization */
@@ -91,9 +102,9 @@
 }
 
 :host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  color: #374151;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-bottom: 1px solid #1d4ed8;
+  color: white;
   font-weight: 600;
   padding: 1rem;
   text-align: center;
@@ -103,10 +114,15 @@
   padding: 1rem;
   border-bottom: 1px solid #f1f5f9;
   text-align: center;
+  transition: background-color 0.2s ease;
 }
 
 :host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
-  background-color: #f8fafc;
+  background-color: #f0f8ff;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr:nth-child(even) {
+  background-color: #fafbff;
 }
 
 :host ::ng-deep .p-datatable .p-paginator {
@@ -118,27 +134,39 @@
 /* Image Preview */
 .image-preview img {
   border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
+  border: 2px solid #e2e8f0;
+  transition: border-color 0.2s ease;
+}
+
+.image-preview img:hover {
+  border-color: #3b82f6;
 }
 
 /* Dialog Customization */
 :host ::ng-deep .p-dialog {
   border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 :host ::ng-deep .p-dialog .p-dialog-header {
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border-bottom: 1px solid #1d4ed8;
   padding: 1.5rem 1.5rem 1rem 1.5rem;
+  border-radius: 1rem 1rem 0 0;
 }
 
 :host ::ng-deep .p-dialog .p-dialog-content {
   padding: 1.5rem;
+  background: white;
 }
 
 :host ::ng-deep .p-dialog .p-dialog-footer {
   border-top: 1px solid #e2e8f0;
   padding: 1rem 1.5rem 1.5rem 1.5rem;
+  background: #f8fafc;
+  border-radius: 0 0 1rem 1rem;
 }
 
 /* Form Fields */
@@ -149,8 +177,8 @@
 .field label {
   display: block;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #1e3a8a;
   margin-bottom: 0.5rem;
 }
 
@@ -220,20 +248,46 @@
 }
 
 :host ::ng-deep .p-toast .p-toast-message {
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 /* Button Customization */
 :host ::ng-deep .p-button {
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: all 0.2s;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
 }
 
 :host ::ng-deep .p-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px -3px rgba(59, 130, 246, 0.2);
+}
+
+:host ::ng-deep .p-button.p-button-info {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+:host ::ng-deep .p-button.p-button-info:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+:host ::ng-deep .p-button.p-button-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+:host ::ng-deep .p-button.p-button-success:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+:host ::ng-deep .p-button.p-button-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+:host ::ng-deep .p-button.p-button-danger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
 }
 
 /* Error Messages */
@@ -241,6 +295,7 @@
   color: #dc2626;
   font-size: 0.75rem;
   margin-top: 0.25rem;
+  font-weight: 500;
 }
 
 /* Success Messages */
@@ -248,4 +303,52 @@
   color: #16a34a;
   font-size: 0.75rem;
   margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+/* Float Label Customization */
+:host ::ng-deep .p-float-label {
+  margin-bottom: 1rem;
+}
+
+:host ::ng-deep .p-float-label label {
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+:host ::ng-deep .p-float-label input:focus + label,
+:host ::ng-deep .p-float-label input.p-filled + label {
+  color: #3b82f6;
+}
+
+/* Dropdown Customization */
+:host ::ng-deep .p-dropdown {
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+:host ::ng-deep .p-dropdown:hover {
+  border-color: #3b82f6;
+}
+
+:host ::ng-deep .p-dropdown.p-focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Input Number Customization */
+:host ::ng-deep .p-inputnumber {
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+:host ::ng-deep .p-inputnumber:hover {
+  border-color: #3b82f6;
+}
+
+:host ::ng-deep .p-inputnumber.p-focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }

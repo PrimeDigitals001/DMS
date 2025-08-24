@@ -29,6 +29,12 @@
       <span>Subtotal:</span>
       <strong>₹{{ subtotal }}</strong>
     </div>
-    <button class="checkout-btn">Complete Purchase (₹{{ subtotal }})</button>
+    <button 
+      class="checkout-btn" 
+      (click)="completePurchase()"
+      [disabled]="purchasing || items.length === 0">
+      <span *ngIf="!purchasing">Complete Purchase (₹{{ subtotal }})</span>
+      <span *ngIf="purchasing">Processing...</span>
+    </button>
   </div>
 </div>

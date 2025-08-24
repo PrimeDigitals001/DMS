@@ -10,6 +10,7 @@ import './utils/cronjob.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import superAdminRoutes from './routes/superAdminRoutes.js'
+import purchaseRoutes from './routes/purchaseRoutes.js'
 
 // Load environment variables
 dotenv.config();
@@ -50,6 +51,7 @@ connectDB();
 app.use('/api/users', userRoutes);
 app.use('/api/admin',adminRoutes);
 app.use('/api/super-admin',superAdminRoutes)
+app.use('/api/purchases', purchaseRoutes)
 
 // Start the server
 app.listen(PORT, () => {
