@@ -1,41 +1,80 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, from, map } from 'rxjs';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+} from 'firebase/firestore';
 import { CustomerVDM } from '../../shared/models/customer.vdm';
+import { db } from '../../../firebase.config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CustomerService {
-  private baseUrl = 'http://localhost:3000/api/super-admin/customers';
+  private collectionName = 'customers';
 
-  constructor(private http: HttpClient) {}
+  constructor() {}
 
   createCustomer(customer: CustomerVDM): Observable<CustomerVDM> {
-    return this.http
-      .post(this.baseUrl, customer.toRemote())
-      .pipe(map((res) => CustomerVDM.toLocal(res)));
+    return from(addDoc(collection(db, this.collectionName), customer.toRemote())).pipe(
+      map((docRef) => new CustomerVDM({ ...customer.toRemote(), _id: docRef.id }))
+    );
   }
 
   updateCustomer(id: string, customer: CustomerVDM): Observable<CustomerVDM> {
-    return this.http
-      .put(`${this.baseUrl}/${id}`, customer.toRemote())
-      .pipe(map((res) => CustomerVDM.toLocal(res)));
+    const docRef = doc(db, this.collectionName, id);
+    return from(updateDoc(docRef, customer.toRemote())).pipe(
+      map(() => new CustomerVDM({ ...customer.toRemote(), _id: id }))
+    );
   }
 
   getCustomers(): Observable<CustomerVDM[]> {
-    return this.http
-      .get<any>(this.baseUrl)
-      .pipe(map((res) => res.data.map((item: any) => CustomerVDM.toLocal(item))));
+    return from(getDocs(collection(db, this.collectionName))).pipe(
+      map((querySnapshot) => {
+        const customers: CustomerVDM[] = [];
+        querySnapshot.forEach((d) => {
+          const data = d.data();
+          customers.push(CustomerVDM.toLocal({ ...data, _id: d.id }));
+        });
+        return customers;
+      })
+    );
   }
 
   getCustomerById(id: string): Observable<CustomerVDM> {
-    return this.http
-      .get(`${this.baseUrl}/${id}`)
-      .pipe(map((res) => CustomerVDM.toLocal(res)));
+    return from(getDocs(query(collection(db, this.collectionName), where('__name__', '==', id)))).pipe(
+      map((qs) => {
+        if (!qs.empty) {
+          const d = qs.docs[0];
+          const data = d.data();
+          return CustomerVDM.toLocal({ ...data, _id: d.id });
+        }
+        throw new Error('Customer not found');
+      })
+    );
   }
 
   deleteCustomer(id: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${id}`);
+    const docRef = doc(db, this.collectionName, id);
+    return from(deleteDoc(docRef));
+  }
+
+  /** Validate RFID uniqueness. Optionally exclude current id when editing */
+  validateRfid(rfid: string, excludeId?: string): Observable<{ isValid: boolean; message?: string }> {
+    const q = query(collection(db, this.collectionName), where('rfid', '==', rfid));
+    return from(getDocs(q)).pipe(
+      map((qs) => {
+        if (qs.empty) return { isValid: true };
+        const conflict = qs.docs.find((d) => d.id !== excludeId);
+        if (conflict) return { isValid: false, message: 'RFID is already registered' };
+        return { isValid: true };
+      })
+    );
   }
 }

@@ -1,57 +1,79 @@
 <p-toast></p-toast>
 
-<div class="login-wrapper">
+<div class="login-container">
   <div class="login-card">
-    <h2 class="login-title">Login</h2>
+    <!-- Logo Section -->
+    <div class="logo-section">
+      <img src="assets/Horizontal Logo (all text)SVG.svg" alt="Company Logo" class="logo" />
+    </div>
 
-    <form [formGroup]="loginForm" (ngSubmit)="login()">
-      <!-- Email -->
-      <div class="p-field mb-4">
-        <label for="email" class="block text-sm mb-1 font-medium">Email</label>
-        <input
-          pInputText
-          id="email"
-          formControlName="email"
-          placeholder="you@example.com"
-          [ngClass]="{ 'ng-invalid': isFieldInvalid('email') }"
-          class="w-full"
-        />
-        <small *ngIf="isFieldInvalid('email')" class="p-error">Valid email is required</small>
-      </div>
+    <!-- Login Form -->
+    <div class="form-section">
+      <h2 class="login-title">Welcome Back</h2>
+      <p class="login-subtitle">Please sign in to your account</p>
 
-      <!-- Password -->
-      <div class="p-field mb-4">
-        <label for="password" class="block text-sm mb-1 font-medium">Password</label>
-        <p-password
-          id="password"
-          formControlName="password"
-          toggleMask="true"
-          feedback="false"
-          inputClass="w-full"
-          [ngClass]="{ 'ng-invalid': isFieldInvalid('password') }"
-        ></p-password>
-        <small *ngIf="isFieldInvalid('password')" class="p-error">Password is required</small>
-      </div>
+      <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-form">
+        <!-- Username Field -->
+        <div class="form-field">
+          <label for="username" class="field-label">Username</label>
+          <div class="input-wrapper">
+            <i class="pi pi-user input-icon"></i>
+            <input
+              pInputText
+              id="username"
+              formControlName="username"
+              placeholder="Enter your username"
+              [ngClass]="{ 'ng-invalid': isFieldInvalid('username') }"
+              class="form-input"
+              autocomplete="username"
+            />
+          </div>
+          <small *ngIf="isFieldInvalid('username')" class="error-message">
+            Username is required
+          </small>
+        </div>
 
-      <!-- Remember me -->
-      <div class="p-field-checkbox mb-4 flex items-center">
-        <p-checkbox
-          binary="true"
-          inputId="rememberMe"
-          formControlName="rememberMe"
-        ></p-checkbox>
-        <label for="rememberMe" class="ml-2">Remember me</label>
-      </div>
+        <!-- Password Field -->
+        <div class="form-field">
+          <label for="password" class="field-label">Password</label>
+          <div class="input-wrapper">
+            <i class="pi pi-lock input-icon"></i>
+            <p-password
+              id="password"
+              formControlName="password"
+              toggleMask="true"
+              [style.width]="'100%'"
+              feedback="false"
+              placeholder="Enter your password"
+              [ngClass]="{ 'ng-invalid': isFieldInvalid('password') }"
+              inputClass="form-input"
+              autocomplete="current-password"
+            ></p-password>
+          </div>
+          <small *ngIf="isFieldInvalid('password')" class="error-message">
+            Password is required
+          </small>
+        </div>
 
-      <!-- Submit -->
-      <button
-        pButton
-        label="Login"
-        type="submit"
-        class="w-full"
-        [loading]="loading"
-        [disabled]="loading"
-      ></button>
-    </form>
+        <!-- Login Button -->
+        <button
+          pButton
+          label="Sign In"
+          type="submit"
+          class="login-button"
+          [loading]="loading"
+          [disabled]="loading || loginForm.invalid"
+          icon="pi pi-sign-in"
+        ></button>
+      </form>
+
+      <!-- Error Display -->
+      @if (errorMessage) {
+        <div class="error-display">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+    </div>
   </div>
 </div>

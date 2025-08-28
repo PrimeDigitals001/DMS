@@ -2,12 +2,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -19,7 +20,6 @@ import { MessageService } from 'primeng/api';
     InputTextModule,
     PasswordModule,
     ButtonModule,
-    CheckboxModule,
     ToastModule,
   ],
   providers: [MessageService],
@@ -28,14 +28,18 @@ import { MessageService } from 'primeng/api';
 })
 export class LoginComponent {
   loginForm!: FormGroup;
-  showPassword: boolean = false;
   loading = false;
+  errorMessage = '';
 
-  constructor(private fb: FormBuilder, private messageService: MessageService) {
+  constructor(
+    private fb: FormBuilder, 
+    private messageService: MessageService,
+    private authService: AuthService,
+    private router: Router
+  ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required]],
-      rememberMe: [false]
+      username: ['', [Validators.required]],
+      password: ['', [Validators.required]]
     });
   }
 
@@ -56,25 +60,44 @@ export class LoginComponent {
     }
 
     this.loading = true;
+    this.errorMessage = '';
 
-    const { email, password } = this.loginForm.value;
+    const { username, password } = this.loginForm.value;
 
-    // Simulate login logic
-    setTimeout(() => {
-      this.loading = false;
-      if (email === 'admin@example.com' && password === 'admin123') {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Login Successful',
-          detail: `Welcome back, Admin!`,
-        });
-      } else {
+    // Call the auth service
+    this.authService.login({ username, password }).subscribe({
+      next: (response) => {
+        this.loading = false;
+        if (response.success) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Login Successful',
+            detail: `Welcome back, ${response.data.ownerName}!`,
+          });
+
+          // Navigate based on user role
+          const role = this.authService.getRole();
+          if (role === 'super-admin') {
+            this.router.navigate(['/clients']); // Super admin can access everything
+          } else if (role === 'admin') {
+            this.router.navigate(['/items']); // Admin can access items and customers
+          } else {
+            this.router.navigate(['/']); // Staff can only access home/cart
+          }
+        } else {
+          this.errorMessage = response.message || 'Login failed. Please try again.';
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Login error:', error);
+        this.errorMessage = 'Login failed. Please check your credentials and try again.';
         this.messageService.add({
           severity: 'error',
           summary: 'Login Failed',
-          detail: `Invalid email or password.`,
+          detail: 'Invalid username or password.',
         });
       }
-    }, 1500);
+    });
   }
 }

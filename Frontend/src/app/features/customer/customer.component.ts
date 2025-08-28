@@ -25,7 +25,7 @@ import { Table } from 'primeng/table';
 import { Router } from '@angular/router';
 import { CustomerVDM } from '../../shared/models/customer.vdm';
 import { CustomerService } from '../../core/services/customer.service';
-import { CustomerSearchFilterPipe } from '../../cutomer-search-filter.pipe';
+import { debounceTime, Subject } from 'rxjs';
 
 @Component({
   selector: 'app-customer',
@@ -37,7 +37,6 @@ import { CustomerSearchFilterPipe } from '../../cutomer-search-filter.pipe';
     ButtonModule,
     InputTextModule,
     ReactiveFormsModule,
-    CustomerSearchFilterPipe,
     FloatLabelModule,
     ToastModule,
     ConfirmDialogModule,
@@ -64,6 +63,22 @@ export class CustomerComponent implements OnInit {
   editMode: boolean = false;
   selectedCustomerId: string | null = null;
 
+  // RFID dialog state
+  rfidDialogVisible: boolean = false;
+  rfidInput: string = '';
+  rfidValidating: boolean = false;
+  rfidError: string = '';
+
+  // Client-side pagination
+  currentPage: number = 1;
+  itemsPerPage: number = 10;
+  pagedCustomers: CustomerVDM[] = [];
+  totalFiltered: number = 0;
+  totalPages: number = 1;
+  totalPagesArray: number[] = [1];
+
+  private searchChanged$ = new Subject<string>();
+
   constructor(
     private fb: FormBuilder,
     private customerService: CustomerService,
@@ -75,6 +90,10 @@ export class CustomerComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadCustomers();
+    this.searchChanged$.pipe(debounceTime(400)).subscribe(() => {
+      this.currentPage = 1;
+      this.applyFilterAndPaging();
+    });
   }
 
   /** Initialize the Add/Edit Customer Form */
@@ -101,6 +120,9 @@ export class CustomerComponent implements OnInit {
       this.editMode = false;
       this.selectedCustomerId = null;
       this.customerForm.reset();
+      // open RFID dialog first; details dialog opens after successful scan
+      this.openRfidDialog();
+      return;
     }
     this.visible = true;
   }
@@ -115,6 +137,7 @@ export class CustomerComponent implements OnInit {
         next: (res) => {
           this.customers = res;
           this.totalCustomers = this.customers.length;
+          this.applyFilterAndPaging();
         },
         error: (err) => {
           console.error('Error fetching customers:', err);
@@ -128,6 +151,35 @@ export class CustomerComponent implements OnInit {
       });
   }
 
+  /** Apply search filter and paginate */
+  applyFilterAndPaging() {
+    const q = this.searchQuery.trim().toLowerCase();
+    const filtered = this.customers.filter((c) => {
+      if (!q) return true;
+      return (
+        (c.customerName || '').toLowerCase().includes(q) ||
+        (c.phoneNumber || '').toLowerCase().includes(q) ||
+        (c.rfid || '').toLowerCase().includes(q)
+      );
+    });
+    this.totalFiltered = filtered.length;
+    this.totalPages = Math.max(1, Math.ceil(this.totalFiltered / this.itemsPerPage));
+    this.totalPagesArray = Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    this.pagedCustomers = filtered.slice(start, end);
+  }
+
+  onSearchChange() {
+    this.searchChanged$.next(this.searchQuery);
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.applyFilterAndPaging();
+  }
+
   /** Add new customer */
   addCustomer() {
     if (this.customerForm.invalid) {
@@ -137,32 +189,39 @@ export class CustomerComponent implements OnInit {
 
     this.submitting = true;
     const newCustomer = new CustomerVDM(this.customerForm.value);
+    // Validate RFID uniqueness first
+    this.customerService
+      .validateRfid(newCustomer.rfid)
+      .pipe(take(1))
+      .subscribe({
+        next: (val) => {
+          if (!val.isValid) {
+            this.submitting = false;
+            this.messageService.add({ severity: 'warn', summary: 'Duplicate RFID', detail: val.message || 'RFID already exists', life: 4000 });
+            return;
+          }
+          this.createCustomer(newCustomer);
+        },
+        error: () => {
+          this.submitting = false;
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to validate RFID', life: 4000 });
+        },
+      });
+  }
 
+  private createCustomer(newCustomer: CustomerVDM) {
     this.customerService
       .createCustomer(newCustomer)
-      .pipe(
-        take(1),
-        finalize(() => (this.submitting = false))
-      )
+      .pipe(take(1), finalize(() => (this.submitting = false)))
       .subscribe({
         next: () => {
           this.loadCustomers();
           this.visible = false;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Customer added successfully',
-            life: 3000,
-          });
+          this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Customer added successfully', life: 3000 });
         },
         error: (err) => {
           console.error('Error adding customer:', err);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: err.error?.message || 'Failed to add customer. Please try again.',
-            life: 5000,
-          });
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to add customer. Please try again.', life: 5000 });
         },
       });
   }
@@ -178,30 +237,33 @@ export class CustomerComponent implements OnInit {
     const updatedCustomer = new CustomerVDM(this.customerForm.value);
 
     this.customerService
-      .updateCustomer(this.selectedCustomerId, updatedCustomer)
-      .pipe(
-        take(1),
-        finalize(() => (this.submitting = false))
-      )
+      .validateRfid(updatedCustomer.rfid, this.selectedCustomerId || undefined)
+      .pipe(take(1))
       .subscribe({
-        next: () => {
-          this.loadCustomers();
-          this.visible = false;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Customer updated successfully',
-            life: 3000,
-          });
+        next: (val) => {
+          if (!val.isValid) {
+            this.submitting = false;
+            this.messageService.add({ severity: 'warn', summary: 'Duplicate RFID', detail: val.message || 'RFID already exists', life: 4000 });
+            return;
+          }
+          this.customerService
+            .updateCustomer(this.selectedCustomerId!, updatedCustomer)
+            .pipe(take(1), finalize(() => (this.submitting = false)))
+            .subscribe({
+              next: () => {
+                this.loadCustomers();
+                this.visible = false;
+                this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Customer updated successfully', life: 3000 });
+              },
+              error: (err) => {
+                console.error('Error updating customer:', err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to update customer. Please try again.', life: 5000 });
+              },
+            });
         },
-        error: (err) => {
-          console.error('Error updating customer:', err);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: err.error?.message || 'Failed to update customer. Please try again.',
-            life: 5000,
-          });
+        error: () => {
+          this.submitting = false;
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to validate RFID', life: 4000 });
         },
       });
   }
@@ -255,6 +317,55 @@ export class CustomerComponent implements OnInit {
     this.router.navigate(['/invoices'], { 
       queryParams: { customerId: customer._id, customerName: customer.customerName } 
     });
+  }
+
+  // RFID modal handlers
+  openRfidDialog() {
+    // In add mode, if RFID already set, do not allow re-scan
+    const currentRfid = this.customerForm?.get('rfid')?.value;
+    if (!this.editMode && currentRfid) {
+      return;
+    }
+    this.rfidInput = '';
+    this.rfidError = '';
+    this.rfidDialogVisible = true;
+  }
+
+  cancelRfidDialog() {
+    this.rfidDialogVisible = false;
+    this.rfidInput = '';
+    this.rfidError = '';
+  }
+
+  confirmRfid() {
+    const value = (this.rfidInput || '').trim();
+    if (!value) {
+      this.rfidError = 'Please tap your RFID card';
+      return;
+    }
+    this.rfidValidating = true;
+    const exclude = this.editMode ? this.selectedCustomerId || undefined : undefined;
+    this.customerService
+      .validateRfid(value, exclude)
+      .pipe(take(1), finalize(() => (this.rfidValidating = false)))
+      .subscribe({
+        next: (val) => {
+          if (!val.isValid) {
+            this.rfidError = val.message || 'RFID is already registered';
+            return;
+          }
+          this.customerForm.get('rfid')?.setValue(value);
+          this.rfidDialogVisible = false;
+          this.rfidError = '';
+          // if adding, open details dialog now
+          if (!this.editMode) {
+            this.visible = true;
+          }
+        },
+        error: () => {
+          this.rfidError = 'Failed to validate RFID. Please try again.';
+        },
+      });
   }
 
   /** Mark all form fields as touched to show validation errors */

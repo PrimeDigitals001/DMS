@@ -11,11 +11,13 @@
           pInputText
           id="on_label"
           [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearchChange()"
           autocomplete="off"
           class="w-full"
           [disabled]="loading"
+          [placeholder]="'Search a Customer'"
         />
-        <label for="on_label">Quick search a Customer</label>
+        <!-- <label for="on_label">Quick search a Customer</label> -->
       </p-floatlabel>
     </div>
 
@@ -25,7 +27,7 @@
     </div>
     <p-button 
       label="Add New Customer" 
-      (onClick)="showDialog()"
+      (click)="showDialog()"
       [disabled]="loading"
       icon="pi pi-plus"
       styleClass="add-btn"
@@ -48,38 +50,19 @@
         <table>
           <thead>
             <tr>
-              <th>Customer Name</th>
-              <th>Phone No.</th>
-              <th>Edit</th>
-              <th>Delete</th>
-              <th>View Invoice</th>
+              <th style="width: 8%">S.No</th>
+              <th style="width: 32%">Customer Name</th>
+              <th style="width: 30%">Phone No.</th>
+              <th style="width: 10%">View Invoice</th>
+              <th style="width: 8%">Action</th>
             </tr>
           </thead>
           <tbody>
-            @for (customer of customers | customerSearchFilter : searchQuery; track customer._id) {
+            @for (customer of pagedCustomers; track customer._id; let i = $index) {
               <tr>
+                <td [attr.data-label]="'S.No'">{{ (currentPage - 1) * itemsPerPage + i + 1 }}</td>
                 <td [attr.data-label]="'Customer Name'">{{ customer.customerName }}</td>
                 <td [attr.data-label]="'Phone No.'">{{ customer.phoneNumber }}</td>
-                <td [attr.data-label]="'Edit'">
-                  <button
-                    pButton
-                    icon="pi pi-pencil"
-                    class="p-button-rounded p-button-text p-button-info"
-                    (click)="showDialog(customer)"
-                    pTooltip="Edit customer"
-                    tooltipPosition="top"
-                  ></button>
-                </td>
-                <td [attr.data-label]="'Delete'">
-                  <button
-                    pButton
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-text p-button-danger"
-                    (click)="deleteCustomer(customer)"
-                    pTooltip="Delete customer"
-                    tooltipPosition="top"
-                  ></button>
-                </td>
                 <td [attr.data-label]="'View Invoice'">
                   <button
                     pButton
@@ -90,10 +73,28 @@
                     tooltipPosition="top"
                   ></button>
                 </td>
+                <td>
+                  <button
+                    pButton
+                    icon="pi pi-pencil"
+                    class="p-button-rounded p-button-text p-button-info"
+                    (click)="showDialog(customer)"
+                    pTooltip="Edit customer"
+                    tooltipPosition="top"
+                  ></button>
+                  <button
+                    pButton
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-text p-button-danger"
+                    (click)="deleteCustomer(customer)"
+                    pTooltip="Delete customer"
+                    tooltipPosition="top"
+                  ></button>
+                </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="5" class="empty-message">
+                <td colspan="6" class="empty-message">
                   @if (searchQuery) {
                     <span>No customers found matching "{{ searchQuery }}"</span>
                   } @else {
@@ -104,6 +105,17 @@
             }
           </tbody>
         </table>
+        <div class="page-size">
+          <span>Showing {{ (currentPage - 1) * itemsPerPage + 1 }}-
+            {{ (currentPage * itemsPerPage) < totalFiltered ? (currentPage * itemsPerPage) : totalFiltered }} of {{ totalFiltered }}</span>
+          <div class="action-buttons" style="justify-content: flex-end; margin-top: 8px;">
+            <button pButton icon="pi pi-angle-left" class="p-button-text" (click)="goToPage(currentPage - 1)"></button>
+            @for (page of totalPagesArray; track page) {
+              <button pButton class="p-button-text" [label]="page.toString()" (click)="goToPage(page)"></button>
+            }
+            <button pButton icon="pi pi-angle-right" class="p-button-text" (click)="goToPage(currentPage + 1)"></button>
+          </div>
+        </div>
       </div>
     }
   </div>
@@ -134,6 +146,27 @@
         Please fill in the customer details below. All fields are required.
       }
     </span>
+
+    @if (customerForm.get('rfid')?.value) {
+      <div class="field" style="margin-top: -0.5rem;">
+        <div class="p-3" style="background: #eff6ff; border: 1px solid #93c5fd; border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <span class="p-text-secondary" style="font-size: 0.9rem;">RFID</span>
+            <div><strong class="font-mono" style="font-size: 1.05rem;">{{ customerForm.get('rfid')?.value }}</strong></div>
+          </div>
+          @if (editMode) {
+            <button pButton type="button" class="p-button-text" icon="pi pi-id-card" label="Rescan" (click)="openRfidDialog()" [disabled]="submitting"></button>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="field" style="margin-top: -0.5rem;">
+        <div class="p-3" style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
+          <span class="p-text-secondary">No RFID scanned</span>
+          <button pButton type="button" class="p-button-text" icon="pi pi-id-card" label="Scan RFID" (click)="openRfidDialog()" [disabled]="submitting"></button>
+        </div>
+      </div>
+    }
 
     <div class="field">
       <label for="customerName" class="field-label">
@@ -178,33 +211,14 @@
       }
     </div>
 
-    <div class="field">
-      <label for="rfid" class="field-label">
-        RFID <span class="required">*</span>
-      </label>
-      <input
-        pInputText
-        id="rfid"
-        formControlName="rfid"
-        class="w-full"
-        placeholder="Enter RFID"
-        [class.ng-invalid]="hasError('rfid')"
-        [class.ng-dirty]="hasError('rfid')"
-        [disabled]="submitting"
-      />
-      @if (hasError('rfid')) {
-        <small class="p-error">
-          {{ getErrorMessage('rfid') }}
-        </small>
-      }
-    </div>
+    <!-- RFID input removed: RFID is managed via scan modal and displayed at top only -->
 
     <div class="dialog-footer">
       <p-button
         type="button"
         label="Cancel"
         severity="secondary"
-        (onClick)="closeDialog()"
+        (click)="closeDialog()"
         [disabled]="submitting"
         styleClass="p-button-text"
       ></p-button>
@@ -217,4 +231,34 @@
       ></p-button>
     </div>
   </form>
+</p-dialog>
+
+<!-- RFID Input Dialog -->
+<p-dialog
+  header="Tap Your RFID"
+  [modal]="true"
+  [(visible)]="rfidDialogVisible"
+  [style]="{ width: '90vw', maxWidth: '480px' }"
+  [closable]="!rfidValidating"
+  [closeOnEscape]="!rfidValidating"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="field">
+    <input
+      pInputText
+      [(ngModel)]="rfidInput"
+      placeholder="RFID will appear here..."
+      class="w-full"
+      [disabled]="rfidValidating"
+      autocomplete="off"
+    />
+  </div>
+  @if (rfidError) {
+    <small class="p-error">{{ rfidError }}</small>
+  }
+  <div class="dialog-footer">
+    <p-button type="button" label="Cancel" styleClass="p-button-text" (click)="cancelRfidDialog()" [disabled]="rfidValidating"></p-button>
+    <p-button type="button" label="Continue" icon="pi pi-check" (click)="confirmRfid()" [disabled]="!rfidInput || rfidValidating" [loading]="rfidValidating"></p-button>
+  </div>
 </p-dialog>

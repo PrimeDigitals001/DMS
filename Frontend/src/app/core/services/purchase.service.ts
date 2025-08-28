@@ -159,6 +159,33 @@ debugger
   }
 
   /**
+   * Get purchases by customer ID (simple query without ordering - no index required)
+   */
+  getPurchasesByCustomerSimple(customerId: string): Observable<any[]> {
+    return from(getDocs(query(
+      collection(db, this.purchaseCollection),
+      where('customerId', '==', customerId)
+      // Removed orderBy to avoid index requirement
+    ))).pipe(
+      map((querySnapshot) => {
+        const purchases: any[] = [];
+        querySnapshot.forEach((doc) => {
+          purchases.push({
+            _id: doc.id,
+            ...doc.data()
+          });
+        });
+        // Sort in memory instead of database
+        return purchases.sort((a, b) => {
+          const dateA = a.purchaseDate?.toDate?.() || new Date(0);
+          const dateB = b.purchaseDate?.toDate?.() || new Date(0);
+          return dateB.getTime() - dateA.getTime(); // Most recent first
+        });
+      })
+    );
+  }
+
+  /**
    * Get purchases by customer ID
    */
   getPurchasesByCustomer(customerId: string): Observable<any[]> {
@@ -243,6 +270,28 @@ debugger
   }
 
   /**
+   * Get purchase items by purchase ID (simple query - no index required)
+   */
+  getPurchaseItemsSimple(purchaseId: string): Observable<any[]> {
+    return from(getDocs(query(
+      collection(db, this.purchaseItemCollection),
+      where('purchaseId', '==', purchaseId)
+      // Simple query without ordering
+    ))).pipe(
+      map((querySnapshot) => {
+        const items: any[] = [];
+        querySnapshot.forEach((doc) => {
+          items.push({
+            _id: doc.id,
+            ...doc.data()
+          });
+        });
+        return items;
+      })
+    );
+  }
+
+  /**
    * Get purchase items by purchase ID
    */
   getPurchaseItems(purchaseId: string): Observable<any[]> {
@@ -259,6 +308,49 @@ debugger
           });
         });
         return items;
+      })
+    );
+  }
+
+  /**
+   * Get item by ID from items collection (simple query - no index required)
+   */
+  getItemByIdSimple(itemId: string): Observable<any> {
+    return from(getDocs(query(
+      collection(db, 'items'),
+      where('__name__', '==', itemId)
+      // Simple query without ordering
+    ))).pipe(
+      map((querySnapshot) => {
+        if (!querySnapshot.empty) {
+          const doc = querySnapshot.docs[0];
+          return {
+            _id: doc.id,
+            ...doc.data()
+          };
+        }
+        throw new Error('Item not found');
+      })
+    );
+  }
+
+  /**
+   * Get item by ID from items collection
+   */
+  getItemById(itemId: string): Observable<any> {
+    return from(getDocs(query(
+      collection(db, 'items'),
+      where('__name__', '==', itemId)
+    ))).pipe(
+      map((querySnapshot) => {
+        if (!querySnapshot.empty) {
+          const doc = querySnapshot.docs[0];
+          return {
+            _id: doc.id,
+            ...doc.data()
+          };
+        }
+        throw new Error('Item not found');
       })
     );
   }

@@ -1,0 +1,239 @@
+<div class="invoice-container">
+  <p-toast position="top-right"></p-toast>
+
+  @if (loading) {
+    <div class="loading">
+      <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="3" animationDuration=".5s"></p-progressSpinner>
+      <p class="muted">Loading customer invoice...</p>
+    </div>
+  } @else {
+    @if (!customer) {
+      <div class="loading">
+        <p class="error">Customer not found</p>
+        <button pButton label="Back to Customers" (click)="backToCustomers()" class="p-button-text"></button>
+      </div>
+    } @else {
+      <div class="header">
+        <button pButton icon="pi pi-arrow-left" class="p-button-text" (click)="backToCustomers()"></button>
+        <h2>Customer Invoice</h2>
+      </div>
+
+      <!-- Customer Info Card -->
+      <div class="customer-info-card">
+        <div class="customer-details">
+          <div class="customer-main">
+            <h3>{{ customer?.customerName }}</h3>
+            <p class="customer-id">Customer ID: {{ (customer?._id || '') }}</p>
+            <p class="customer-phone">Phone: {{ customer?.phoneNumber }}</p>
+          </div>
+          <div class="customer-summary">
+            <div class="summary-item">
+              <span class="label">Total Orders</span>
+              <span class="value">{{ orders.length }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Total Amount</span>
+              <span class="value total-amount">₹{{ totalAmount }}</span>
+            </div>
+          </div>
+        </div>
+        <button pButton icon="pi pi-calendar" label="Generate Custom Invoice" (click)="handleCustomInvoice()" [disabled]="orders.length === 0" class="custom-invoice-btn"></button>
+      </div>
+
+      <!-- Invoice Table -->
+      <div class="invoice-table-card">
+        <div class="table-header">
+          <h3>Purchase History & Invoice</h3>
+          <div class="pagination">
+            <span class="muted">
+              @if (orders.length === 0) {
+                No purchases found
+              } @else {
+                Showing {{ startIndex + 1 }} to {{ (startIndex + itemsPerPage) < orders.length ? (startIndex + itemsPerPage) : orders.length }} of {{ orders.length }} items
+              }
+            </span>
+            @if (totalPages > 1) {
+              <div class="page-buttons">
+                                 <button pButton icon="pi pi-angle-left" class="p-button-text" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1"></button>
+                @for (page of [].constructor(totalPages); track $index) {
+                                     <button pButton class="p-button-text" [label]="($index + 1).toString()" (click)="goToPage($index + 1)"></button>
+                }
+                                 <button pButton icon="pi pi-angle-right" class="p-button-text" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages"></button>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          @if (orders.length === 0) {
+            <div class="empty">This customer hasn't made any purchases yet</div>
+          } @else {
+            <table class="invoice-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Item ID</th>
+                  <th>Item Name</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of paginatedOrders; track order.id) {
+                  <tr>
+                    <td class="date-cell">{{ order.date }}</td>
+                    <td class="item-id-cell">{{ order.itemId }}</td>
+                    <td class="item-name-cell">{{ order.itemName }}</td>
+                    <td class="quantity-cell">{{ order.quantity }}</td>
+                    <td class="price-cell">₹{{ order.unitPrice }}</td>
+                    <td class="total-cell">₹{{ order.total }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="invoice-total">
+                  <td colspan="5" class="total-label">Grand Total:</td>
+                  <td class="total-value">₹{{ totalAmount }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          }
+        </div>
+      </div>
+
+      <!-- Custom Invoice Modal -->
+      <p-dialog
+        header="Generate Custom Invoice"
+        [modal]="true"
+        [(visible)]="showInvoiceModal"
+        [style]="{ width: '95vw', maxWidth: '1000px' }"
+        [draggable]="false"
+        [resizable]="false"
+      >
+        <div class="dialog-body">
+          @if (error) {
+            <div class="error-box">{{ error }}</div>
+          }
+
+          <!-- Date Selection Section -->
+          <div class="date-selection-section">
+            <h4>Select Date Range</h4>
+            <div class="date-grid">
+              <div>
+                <label>Start Date</label>
+                <p-calendar 
+                  [(ngModel)]="startDate" 
+                  dateFormat="yy-mm-dd" 
+                  (onSelect)="onDateRangeChange()" 
+                  [showIcon]="true"
+                  placeholder="Select start date"
+                ></p-calendar>
+              </div>
+              <div>
+                <label>End Date</label>
+                <p-calendar 
+                  [(ngModel)]="endDate" 
+                  dateFormat="yy-mm-dd" 
+                  (onSelect)="onDateRangeChange()" 
+                  [showIcon]="true"
+                  placeholder="Select end date"
+                ></p-calendar>
+              </div>
+            </div>
+          </div>
+
+          <!-- Invoice Summary -->
+          @if (startDate && endDate) {
+            <div class="invoice-summary">
+              <h4>Invoice Summary</h4>
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <span class="label">Date Range</span>
+                  <span class="value">{{ startDate | date: 'MMM dd, yyyy' }} - {{ endDate | date: 'MMM dd, yyyy' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="label">Total Items</span>
+                  <span class="value">{{ selectedOrders.length }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="label">Total Quantity</span>
+                  <span class="value">{{ selectedTotalQuantity }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="label">Total Amount</span>
+                  <span class="value total-amount">₹{{ selectedTotalAmount }}</span>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- No Orders Message -->
+          @if (selectedOrders.length === 0 && startDate && endDate) {
+            <div class="no-orders-message">
+              <i class="pi pi-info-circle"></i>
+              <p>No purchases found in the selected date range.</p>
+              <p class="sub-text">Try selecting a different date range or check if the customer has made purchases.</p>
+            </div>
+          }
+
+          <!-- Selected Items for Invoice -->
+          @if (selectedOrders.length > 0) {
+            <div class="invoice-items-section">
+              <h4>Invoice Items</h4>
+              <div class="invoice-items-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Item ID</th>
+                      <th>Item Name</th>
+                      <th>Quantity</th>
+                      <th>Unit Price</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (order of selectedOrders; track order.id) {
+                      <tr>
+                        <td class="date-cell">{{ order.date }}</td>
+                        <td class="item-id-cell">{{ order.itemId }}</td>
+                        <td class="item-name-cell">{{ order.itemName }}</td>
+                        <td class="quantity-cell">{{ order.quantity }}</td>
+                        <td class="price-cell">₹{{ order.unitPrice }}</td>
+                        <td class="total-cell">₹{{ order.total }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr class="invoice-total-row">
+                      <td colspan="5" class="total-label">Invoice Total:</td>
+                      <td class="total-value">₹{{ selectedTotalAmount }}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+
+        <ng-template pTemplate="footer">
+          <div class="footer-actions">
+            <button pButton label="Cancel" class="p-button-text" (click)="closeModal()" [disabled]="sendingInvoice"></button>
+            <button 
+              pButton 
+              label="Generate Invoice" 
+              icon="pi pi-file-pdf" 
+              (click)="sendInvoice()" 
+              [disabled]="selectedOrders.length === 0 || sendingInvoice" 
+              [loading]="sendingInvoice"
+              class="generate-invoice-btn"
+            ></button>
+          </div>
+        </ng-template>
+      </p-dialog>
+    }
+  }
+</div>
+
+

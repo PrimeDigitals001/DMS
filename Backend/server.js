@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import './utils/cronjob.js'; 
 
 // Importing routes
+import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import superAdminRoutes from './routes/superAdminRoutes.js'
@@ -48,6 +49,7 @@ const connectDB = async () => {
 connectDB();
 
 // Define API routes
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin',adminRoutes);
 app.use('/api/super-admin',superAdminRoutes)

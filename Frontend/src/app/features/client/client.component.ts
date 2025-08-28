@@ -10,6 +10,7 @@ import {
 import { take, finalize } from 'rxjs/operators';
 import { ClientVDM } from '../../shared/models/client.vdm';
 import { ClientService } from '../../core/services/client.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Dialog } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -61,6 +62,7 @@ export class ClientComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private clientService: ClientService,
+    private authService: AuthService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService
   ) {}
@@ -139,15 +141,49 @@ export class ClientComponent implements OnInit {
         finalize(() => (this.submitting = false))
       )
       .subscribe({
-        next: () => {
+        next: (createdClient) => {
+          // Create admin user for this client
+          const adminUserData = {
+            username: this.clientForm.value.email,
+            ownerName: this.clientForm.value.ownerName,
+            email: this.clientForm.value.email,
+            phoneNumber: this.clientForm.value.phoneNumber,
+            role: 'admin' as const,
+            client: this.clientForm.value.client,
+            passwordHash: 'password123' // Default password, should be changed by admin
+          };
+
+          this.authService.createUser(adminUserData).subscribe({
+            next: (userResult) => {
+              if (userResult.success) {
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Success',
+                  detail: `Client added successfully. Admin user created with email: ${this.clientForm.value.email} and password: password123`,
+                  life: 5000,
+                });
+              } else {
+                this.messageService.add({
+                  severity: 'warn',
+                  summary: 'Warning',
+                  detail: 'Client added but failed to create admin user. Please create admin user manually.',
+                  life: 5000,
+                });
+              }
+            },
+            error: (userError) => {
+              console.error('Error creating admin user:', userError);
+              this.messageService.add({
+                severity: 'warn',
+                summary: 'Warning',
+                detail: 'Client added but failed to create admin user. Please create admin user manually.',
+                life: 5000,
+              });
+            }
+          });
+
           this.loadClients();
           this.visible = false;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Client added successfully',
-            life: 3000,
-          });
         },
         error: (err) => {
           console.error('Error adding client:', err);

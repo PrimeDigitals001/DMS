@@ -1,11 +1,11 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, from, map, catchError, of } from 'rxjs';
+import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../../../firebase.config';
 
 export interface LoginPayload {
   username: string;
   password: string;
-  adminPassword?: string;
 }
 
 export interface LoginResponse {
@@ -13,66 +13,246 @@ export interface LoginResponse {
   message: string;
   data: {
     id: string;
-    client: string | null;    // client might be null/empty for super-admins
     username: string;
     ownerName: string;
     email?: string;
     phoneNumber: string;
-    isAdmin: boolean;         // backend flag (true for admin/super-admin)
-    role?: 'admin' | 'super-admin'; // optional from backend (if available)
-    isSuperAdmin?: boolean;   // optional from backend (if available)
+    role: 'super-admin' | 'admin' | 'staff';
+    client?: string;
   };
 }
 
-export type UserRole = 'admin' | 'super-admin';
-type StoredUser = LoginResponse['data']; // we persist exactly what we receive (+ optional role fields)
+export interface UserData {
+  id: string;
+  username: string;
+  ownerName: string;
+  email?: string;
+  phoneNumber: string;
+  role: 'super-admin' | 'admin' | 'staff';
+  client?: string;
+  passwordHash: string;
+}
+
+export type UserRole = 'super-admin' | 'admin' | 'staff';
+type StoredUser = LoginResponse['data'];
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private baseUrl = 'http://localhost:3000/api/auth';
-  private tokenKey = 'auth_token'; // reserved if you add token later
   private userKey = 'auth_user';
+  private usersCollection = 'users';
 
   // Reactive user state using Angular signals
   private userSig = signal<StoredUser | null>(this.readStoredUser());
 
   // Derived role from the stored user
-  private roleSig = computed<UserRole | null>(() => this.deriveRole(this.userSig()));
+  private roleSig = computed<UserRole | null>(() => this.userSig()?.role || null);
 
   // Convenience computed values
   private isAuthedSig = computed<boolean>(() => this.userSig() !== null);
   private canSeeSidebarSig = computed<boolean>(() => {
-    const r = this.roleSig();
-    return r === 'admin' || r === 'super-admin';
+    const role = this.roleSig();
+    return role === 'super-admin' || role === 'admin';
   });
 
-  constructor(private http: HttpClient) {}
+  constructor() {}
 
   // Attempt to log in the user
   login(payload: LoginPayload): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/login`, payload).pipe(
-      tap((res) => {
-        if (res.success && res.data) {
-          // If backend doesn’t send role/isSuperAdmin, derive role locally
-          const derivedRole = this.deriveRole(res.data);
-          const toStore: StoredUser = {
-            ...res.data,
-            role: res.data.role ?? derivedRole ?? undefined,
-          };
-          this.writeStoredUser(toStore);
-          this.userSig.set(toStore);
+    return from(this.authenticateUser(payload.username, payload.password)).pipe(
+      map((result) => {
+        if (result.success && result.data) {
+          this.writeStoredUser(result.data);
+          this.userSig.set(result.data);
         }
+        return result;
+      }),
+      catchError((error) => {
+        console.error('Login error:', error);
+        return of({
+          success: false,
+          message: 'Login failed. Please try again.',
+          data: {
+            id: '',
+            username: '',
+            ownerName: '',
+            phoneNumber: '',
+            role: 'staff' as const
+          }
+        });
       })
     );
   }
 
+  // Authenticate user against Firestore
+  private async authenticateUser(username: string, password: string): Promise<LoginResponse> {
+    try {
+      // Find user by email or phone number
+      const usersRef = collection(db, this.usersCollection);
+      const q = query(
+        usersRef,
+        where('email', '==', username)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        // Try searching by phone number
+        const phoneQuery = query(
+          usersRef,
+          where('phoneNumber', '==', username)
+        );
+        const phoneSnapshot = await getDocs(phoneQuery);
+        
+        if (phoneSnapshot.empty) {
+          return {
+            success: false,
+            message: 'Invalid username or password',
+            data: {
+              id: '',
+              username: '',
+              ownerName: '',
+              phoneNumber: '',
+              role: 'staff'
+            }
+          };
+        }
+        
+        // Use phone number result
+        const userDoc = phoneSnapshot.docs[0];
+        const userData = userDoc.data() as UserData;
+        
+        // Verify password (simple comparison for demo - use bcrypt in production)
+        if (userData.passwordHash !== password) {
+          return {
+            success: false,
+            message: 'Invalid username or password',
+            data: {
+              id: '',
+              username: '',
+              ownerName: '',
+              phoneNumber: '',
+              role: 'staff'
+            }
+          };
+        }
+
+        return {
+          success: true,
+          message: 'Login successful',
+          data: {
+            id: userDoc.id,
+            username: userData.email || userData.phoneNumber,
+            ownerName: userData.ownerName,
+            email: userData.email,
+            phoneNumber: userData.phoneNumber,
+            role: userData.role,
+            client: userData.client
+          }
+        };
+      }
+
+      // Use email result
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data() as UserData;
+      
+      // Verify password (simple comparison for demo - use bcrypt in production)
+      if (userData.passwordHash !== password) {
+        return {
+          success: false,
+          message: 'Invalid username or password',
+          data: {
+            id: '',
+            username: '',
+            ownerName: '',
+            phoneNumber: '',
+            role: 'staff'
+          }
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Login successful',
+        data: {
+          id: userDoc.id,
+          username: userData.email || userData.phoneNumber,
+          ownerName: userData.ownerName,
+          email: userData.email,
+          phoneNumber: userData.phoneNumber,
+          role: userData.role,
+          client: userData.client
+        }
+      };
+
+    } catch (error) {
+      console.error('Authentication error:', error);
+      return {
+        success: false,
+        message: 'Authentication failed',
+        data: {
+          id: '',
+          username: '',
+          ownerName: '',
+          phoneNumber: '',
+          role: 'staff'
+        }
+      };
+    }
+  }
+
   // Log out user by clearing data
-  logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
-    this.userSig.set(null);
+  logout(): Observable<any> {
+    return of({}).pipe(
+      map(() => {
+        localStorage.removeItem(this.userKey);
+        this.userSig.set(null);
+        return { success: true, message: 'Logout successful' };
+      })
+    );
+  }
+
+  // Get current user from stored data
+  getCurrentUser(): Observable<LoginResponse> {
+    const user = this.getUser();
+    if (user) {
+      return of({
+        success: true,
+        message: 'User found',
+        data: user
+      });
+    } else {
+      return of({
+        success: false,
+        message: 'No user logged in',
+        data: {
+          id: '',
+          username: '',
+          ownerName: '',
+          phoneNumber: '',
+          role: 'staff'
+        }
+      });
+    }
+  }
+
+  // Create a new user in the database
+  createUser(userData: Omit<UserData, 'id'>): Observable<{ success: boolean; message: string; userId?: string }> {
+    return from(addDoc(collection(db, this.usersCollection), userData)).pipe(
+      map((docRef) => ({
+        success: true,
+        message: 'User created successfully',
+        userId: docRef.id
+      })),
+      catchError((error) => {
+        console.error('Create user error:', error);
+        return of({
+          success: false,
+          message: 'Failed to create user'
+        });
+      })
+    );
   }
 
   // Get the logged-in user's data (reactive-safe)
@@ -85,25 +265,51 @@ export class AuthService {
     return this.isAuthedSig();
   }
 
-  // Original method kept for compatibility (checks backend flag)
-  isAdmin(): boolean {
-    const user = this.userSig();
-    return user?.isAdmin === true && this.getRole() === 'admin';
-  }
-
-  // New: true only for super-admins
-  isSuperAdmin(): boolean {
-    return this.roleSig() === 'super-admin';
-  }
-
-  // New: return 'admin' | 'super-admin' | null
+  // Get user role
   getRole(): UserRole | null {
     return this.roleSig();
   }
 
-  // New: show sidebar only for admin or super-admin
+  // Check if user is super admin
+  isSuperAdmin(): boolean {
+    return this.roleSig() === 'super-admin';
+  }
+
+  // Check if user is admin
+  isAdmin(): boolean {
+    return this.roleSig() === 'admin';
+  }
+
+  // Check if user is staff
+  isStaff(): boolean {
+    return this.roleSig() === 'staff';
+  }
+
+  // Check if user can see sidebar (admin and super-admin only)
   canSeeSidebar(): boolean {
     return this.canSeeSidebarSig();
+  }
+
+  // Check if user can access clients (super-admin only)
+  canAccessClients(): boolean {
+    return this.roleSig() === 'super-admin';
+  }
+
+  // Check if user can access items (admin and super-admin)
+  canAccessItems(): boolean {
+    const role = this.roleSig();
+    return role === 'admin' || role === 'super-admin';
+  }
+
+  // Check if user can access customers (admin and super-admin)
+  canAccessCustomers(): boolean {
+    const role = this.roleSig();
+    return role === 'admin' || role === 'super-admin';
+  }
+
+  // Check if user can access home/cart (all users)
+  canAccessHome(): boolean {
+    return this.isLoggedIn();
   }
 
   // ============ Helpers ============
@@ -124,31 +330,5 @@ export class AuthService {
       return;
     }
     localStorage.setItem(this.userKey, JSON.stringify(user));
-  }
-
-  private deriveRole(user: StoredUser | null): UserRole | null {
-    if (!user) return null;
-
-    // If backend already provides 'role', trust it
-    if (user.role === 'admin' || user.role === 'super-admin') {
-      return user.role;
-    }
-
-    // If backend provides explicit super-admin flag
-    if (user.isSuperAdmin === true) return 'super-admin';
-
-    // Heuristic:
-    // - If isAdmin true AND has a client => admin of that client
-    // - If isAdmin true AND no/empty client => super-admin
-    if (user.isAdmin === true) {
-      const clientStr = (user.client ?? '').toString().trim().toLowerCase();
-      if (!clientStr || clientStr === 'super-admin') {
-        return 'super-admin';
-      }
-      return 'admin';
-    }
-
-    // Not an admin or super admin
-    return null;
   }
 }

@@ -25,7 +25,7 @@
     </div>
     <p-button 
       label="Add New Client" 
-      (onClick)="showDialog()"
+      (click)="showDialog()"
       [disabled]="loading"
       icon="pi pi-plus"
       styleClass="add-btn"
@@ -217,7 +217,7 @@
         type="button"
         label="Cancel"
         severity="secondary"
-        (onClick)="closeDialog()"
+        (click)="closeDialog()"
         [disabled]="submitting"
         styleClass="p-button-text"
       ></p-button>

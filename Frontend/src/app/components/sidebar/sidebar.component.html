@@ -1,7 +1,8 @@
 <div class="sidebar" 
      [class.sidebar-open]="isOpen"
      (mouseenter)="onMouseEnter()"
-     (mouseleave)="onMouseLeave()">
+     (mouseleave)="onMouseLeave()"
+     *ngIf="!authService.isStaff()">
   
   <!-- Logo Section -->
   <div class="sidebar-header">
@@ -15,7 +16,7 @@
   <nav class="sidebar-nav">
     <ul class="menu">
       <li 
-        *ngFor="let item of menuItems" 
+        *ngFor="let item of getFilteredMenuItems()" 
         [class.active]="isRouteActive(item.route)"
         (click)="selectMenu(item)"
         class="menu-item"
@@ -37,7 +38,10 @@
   <div class="sidebar-footer" *ngIf="isOpen">
     <div class="user-info">
       <i class="pi pi-user" style="font-size: 1.2rem; color: #64748b;"></i>
-      <span class="user-name">Admin User</span>
+      <div class="user-details">
+        <span class="user-name">{{ getUserDisplayName() }}</span>
+        <span class="user-role">{{ getUserRole() }}</span>
+      </div>
     </div>
   </div>
 </div>
