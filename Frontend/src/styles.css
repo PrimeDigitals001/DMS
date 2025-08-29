@@ -182,3 +182,84 @@ app-root {
   background: rgba(59, 130, 246, 0.2);
   color: #1e3a8a;
 }
+
+/* Global PrimeNG Dialog overrides - ensure all popups use white background */
+.p-dialog .p-dialog-header,
+.p-dialog .p-dialog-content,
+.p-dialog .p-dialog-footer {
+  background: #ffffff !important;
+  color: #111827 !important; /* slate-900 */
+}
+
+/* Optional: ensure inner text inherits dark color */
+.p-dialog .p-dialog-content * {
+  color: inherit;
+}
+
+/* Global PrimeNG Calendar (p-calendar) overrides */
+.p-calendar .p-inputtext {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e5e7eb !important; /* neutral border */
+}
+
+/* Stronger overrides for PrimeNG Calendar overlay to force white background */
+.p-datepicker,
+.p-datepicker * {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* Keep hover/selection states readable */
+.p-datepicker .p-datepicker-calendar td > span:hover {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+.p-datepicker .p-highlight,
+.p-datepicker .p-highlight > span {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* PrimeNG ConfirmDialog - white card, rounded, clean */
+.p-confirm-dialog .p-dialog-header,
+.p-confirm-dialog .p-dialog-content,
+.p-confirm-dialog .p-dialog-footer {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+.p-confirm-dialog .p-dialog {
+  border-radius: 12px !important;
+}
+
+/* Confirm dialog text */
+.p-confirm-dialog .p-confirm-dialog-message {
+  color: #6b7280 !important; /* slate-500 */
+  line-height: 1.5;
+}
+
+/* Footer buttons */
+.p-confirm-dialog .p-dialog-footer .p-button {
+  border-radius: 10px !important;
+  padding: 0.6rem 1.1rem !important;
+}
+
+/* Cancel: outlined, neutral */
+.p-confirm-dialog .p-dialog-footer .p-button.p-button-text,
+.p-confirm-dialog .p-dialog-footer .p-button.p-button-outlined {
+  background: #ffffff !important;
+  color: #374151 !important; /* slate-700 */
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Delete: red filled */
+.p-confirm-dialog .p-dialog-footer .p-button.p-button-danger {
+  background: #dc2626 !important; /* red-600 */
+  border: none !important;
+}
+
+.p-confirm-dialog .p-dialog-footer .p-button.p-button-danger:hover {
+  background: #b91c1c !important; /* red-700 */
+}

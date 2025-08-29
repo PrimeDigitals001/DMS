@@ -48,6 +48,11 @@ export class LoginComponent {
     return !!(control?.invalid && (control?.dirty || control?.touched));
   }
 
+//   # Use these credentials:
+// # Super Admin: superadmin@example.com / password123
+// # Admin: admin@example.com / password123  
+// # Staff: staff@example.com / password123
+
   login() {
     if (this.loginForm.invalid) {
       this.messageService.add({
